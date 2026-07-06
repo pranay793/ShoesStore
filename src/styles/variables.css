@@ -1,0 +1,67 @@
+/* CSS Variables for FluxRun Design Tokens */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Color Palette */
+  --flux-primary: #0B57FF;
+  --flux-primary-glow: rgba(11, 87, 255, 0.15);
+  --flux-secondary: #111111;
+  --flux-background: #F8F9FC;
+  --flux-accent: #00E5FF;
+  --flux-text: #222222;
+  --flux-text-muted: #666666;
+  --flux-success: #00C853;
+  --flux-warning: #FFC107;
+  --flux-danger: #FF3B30;
+  
+  /* Luxury Dark Overlays */
+  --flux-card-bg: rgba(255, 255, 255, 0.8);
+  --flux-card-border: rgba(255, 255, 255, 0.4);
+  --flux-dark-card-bg: rgba(17, 17, 17, 0.85);
+  --flux-dark-card-border: rgba(255, 255, 255, 0.08);
+
+  /* Typography */
+  --font-primary: 'Poppins', sans-serif;
+  --font-secondary: 'Inter', sans-serif;
+  --font-display: 'Sora', sans-serif;
+
+  /* Shadows */
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.1);
+  --shadow-premium: 0 25px 60px -15px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 10px 30px rgba(11, 87, 255, 0.3);
+
+  /* Corner Radius */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Custom Scrollbar for premium feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--flux-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(17, 17, 17, 0.1);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--flux-background);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(11, 87, 255, 0.6);
+}
