@@ -327,7 +327,7 @@ export const Checkout = () => {
                           onClick={() => setFormData(prev => ({ ...prev, paymentMethod: p.val }))}
                           className={`btn border w-100 py-3 d-flex flex-column align-items-center gap-2 rounded-3 text-secondary transition ${formData.paymentMethod === p.val ? 'border-primary text-primary fw-bold bg-primary-glow' : 'border-light'}`}
                           style={{
-                            backgroundColor: formData.paymentMethod === p.val ? 'rgba(11, 87, 255, 0.04)' : 'transparent',
+                            backgroundColor: formData.paymentMethod === p.val ? 'rgba(0, 162, 255, 0.04)' : 'transparent',
                             fontSize: '13px'
                           }}
                         >

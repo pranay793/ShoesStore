@@ -8,6 +8,8 @@ import { ProductDetails } from './pages/ProductDetails';
 import { CartPage } from './pages/CartPage';
 import { Checkout } from './pages/Checkout';
 import { OrderSuccess } from './pages/OrderSuccess';
+import { About } from './pages/About';
+import { Contact } from './pages/Contact';
 import { AnimatePresence, motion } from 'framer-motion';
 
 // Scroll To Top component to reset window scroll on navigation
@@ -25,10 +27,11 @@ const ScrollToTop = () => {
 const PageWrapper = ({ children }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       transition={{ duration: 0.35, ease: 'easeInOut' }}
+      style={{ transform: 'none' }}
     >
       {children}
     </motion.div>
@@ -82,6 +85,22 @@ const AnimatedRoutes = () => {
           } 
         />
         <Route 
+          path="/about" 
+          element={
+            <PageWrapper>
+              <About />
+            </PageWrapper>
+          } 
+        />
+        <Route 
+          path="/contact" 
+          element={
+            <PageWrapper>
+              <Contact />
+            </PageWrapper>
+          } 
+        />
+        <Route 
           path="/order-success" 
           element={
             <PageWrapper>
@@ -94,17 +113,26 @@ const AnimatedRoutes = () => {
   );
 };
 
+const AppContent = () => {
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+
+  return (
+    <div className="d-flex flex-column min-vh-100" style={{ backgroundColor: 'var(--flux-background)' }}>
+      <Navbar />
+      <main className="flex-grow-1" style={{ paddingTop: isHome ? '0px' : '100px' }}>
+        <AnimatedRoutes />
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
 function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <div className="d-flex flex-column min-vh-100" style={{ backgroundColor: 'var(--flux-background)' }}>
-        <Navbar />
-        <main className="flex-grow-1">
-          <AnimatedRoutes />
-        </main>
-        <Footer />
-      </div>
+      <AppContent />
     </BrowserRouter>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -15,7 +15,24 @@ export const Navbar = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      const isHome = location.pathname === '/';
+      const threshold = isHome ? window.innerHeight * 2.2 : 40;
+      if (window.scrollY > threshold) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [location.pathname]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -31,13 +48,22 @@ export const Navbar = () => {
     setSearchQuery('');
   };
 
+  const showDarkNavbar = location.pathname !== '/' || isScrolled;
+
   return (
     <>
-      <header className="sticky-top" style={{ zIndex: 1040 }}>
-        <nav className="navbar navbar-expand-lg navbar-dark bg-dark py-3 px-2 px-md-5" style={{
-          background: 'rgba(17, 17, 17, 0.9) !important',
-          backdropFilter: 'blur(16px)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+      <motion.header 
+        initial={{ y: -80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 80, damping: 15, delay: 0.2 }}
+        style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1040 }}
+      >
+        <nav className="navbar navbar-expand-lg navbar-dark py-3 px-2 px-md-5" style={{
+          background: showDarkNavbar ? 'rgba(10, 10, 12, 0.85)' : 'transparent',
+          backdropFilter: showDarkNavbar ? 'blur(16px)' : 'none',
+          WebkitBackdropFilter: showDarkNavbar ? 'blur(16px)' : 'none',
+          borderBottom: showDarkNavbar ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid transparent',
+          transition: 'all 0.35s ease-in-out'
         }}>
           <div className="container-fluid">
             {/* Brand Logo Integration */}
@@ -135,6 +161,18 @@ export const Navbar = () => {
                 </li>
 
                 <li className="nav-item">
+                  <NavLink to="/about" className={({ isActive }) => `nav-link nav-link-animated fw-semibold text-white px-2 ${isActive ? 'active-nav-link text-primary' : ''}`}>
+                    About Us
+                  </NavLink>
+                </li>
+
+                <li className="nav-item">
+                  <NavLink to="/contact" className={({ isActive }) => `nav-link nav-link-animated fw-semibold text-white px-2 ${isActive ? 'active-nav-link text-primary' : ''}`}>
+                    Contact Us
+                  </NavLink>
+                </li>
+
+                <li className="nav-item">
                   <span className="nav-link text-white-50 px-1">|</span>
                 </li>
 
@@ -221,7 +259,7 @@ export const Navbar = () => {
             </div>
           </div>
         </nav>
-      </header>
+      </motion.header>
 
       {/* Mobile Drawer Navigation */}
       <AnimatePresence>
@@ -279,10 +317,8 @@ export const Navbar = () => {
                 <div className="d-flex flex-column gap-4">
                   <Link to="/" onClick={() => setShowMobileMenu(false)} className="text-white text-decoration-none h5 fw-bold">Home</Link>
                   <Link to="/catalog" onClick={() => setShowMobileMenu(false)} className="text-white text-decoration-none h5 fw-bold">Shop Shoes</Link>
-                  <Link to="/catalog?category=Running" onClick={() => setShowMobileMenu(false)} className="text-white-50 text-decoration-none ms-3">Running</Link>
-                  <Link to="/catalog?category=Training" onClick={() => setShowMobileMenu(false)} className="text-white-50 text-decoration-none ms-3">Training</Link>
-                  <Link to="/catalog?category=Trail Running" onClick={() => setShowMobileMenu(false)} className="text-white-50 text-decoration-none ms-3">Trail Running</Link>
-                  <Link to="/catalog?category=Lifestyle" onClick={() => setShowMobileMenu(false)} className="text-white-50 text-decoration-none ms-3">Lifestyle</Link>
+                  <Link to="/about" onClick={() => setShowMobileMenu(false)} className="text-white text-decoration-none h5 fw-bold">About Us</Link>
+                  <Link to="/contact" onClick={() => setShowMobileMenu(false)} className="text-white text-decoration-none h5 fw-bold">Contact Us</Link>
                   <Link to="/cart" onClick={() => setShowMobileMenu(false)} className="text-white text-decoration-none h5 fw-bold">Shopping Cart</Link>
                   <Link to="/checkout" onClick={() => setShowMobileMenu(false)} className="text-white text-decoration-none h5 fw-bold">Checkout</Link>
                 </div>

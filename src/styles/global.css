@@ -61,7 +61,7 @@ h1, h2, h3, h4, h5, h6 {
   position: absolute;
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, rgba(11, 87, 255, 0.25) 0%, rgba(0, 229, 255, 0.05) 50%, rgba(0, 0, 0, 0) 70%);
+  background: radial-gradient(circle, rgba(0, 162, 255, 0.25) 0%, rgba(0, 229, 255, 0.05) 50%, rgba(0, 0, 0, 0) 70%);
   filter: blur(40px);
   pointer-events: none;
   z-index: 0;
@@ -99,7 +99,7 @@ h1, h2, h3, h4, h5, h6 {
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(11, 87, 255, 0.2);
+    box-shadow: 0 0 20px rgba(0, 162, 255, 0.2);
   }
   50% {
     box-shadow: 0 0 35px rgba(0, 229, 255, 0.5);
@@ -142,7 +142,7 @@ h1, h2, h3, h4, h5, h6 {
 .btn-flux-primary:hover {
   color: #ffffff;
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(11, 87, 255, 0.45);
+  box-shadow: 0 12px 30px rgba(0, 162, 255, 0.45);
 }
 
 .btn-flux-primary:hover::before {
@@ -199,14 +199,14 @@ h1, h2, h3, h4, h5, h6 {
 .flux-card:hover {
   transform: translateY(-10px);
   box-shadow: var(--shadow-premium);
-  border-color: rgba(11, 87, 255, 0.2);
+  border-color: rgba(0, 162, 255, 0.2);
 }
 
 /* Timeline Custom Styles */
 .timeline-container {
   position: relative;
   padding-left: 30px;
-  border-left: 2px solid rgba(11, 87, 255, 0.15);
+  border-left: 2px solid rgba(0, 162, 255, 0.15);
 }
 
 .timeline-item {
@@ -225,7 +225,7 @@ h1, h2, h3, h4, h5, h6 {
   background: #ffffff;
   border: 4px solid var(--flux-primary);
   transition: var(--transition-normal);
-  box-shadow: 0 0 10px rgba(11, 87, 255, 0.3);
+  box-shadow: 0 0 10px rgba(0, 162, 255, 0.3);
 }
 
 .timeline-item:hover::before {
@@ -442,7 +442,7 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 252, 0.8) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(11, 87, 255, 0.07);
+  border: 1px solid rgba(0, 162, 255, 0.07);
   border-radius: 28px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.015);
   transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
@@ -450,28 +450,78 @@ h1, h2, h3, h4, h5, h6 {
 
 .testimonial-card-premium:hover {
   transform: translateY(-8px) scale(1.02);
-  border-color: rgba(11, 87, 255, 0.22);
-  box-shadow: 0 20px 40px rgba(11, 87, 255, 0.1), 0 0 20px rgba(11, 87, 255, 0.02);
+  border-color: rgba(0, 162, 255, 0.22);
+  box-shadow: 0 20px 40px rgba(0, 162, 255, 0.1), 0 0 20px rgba(0, 162, 255, 0.02);
 }
 
 .testimonial-card-premium.card-highlighted {
   background: #ffffff;
-  border-color: rgba(11, 87, 255, 0.28);
-  box-shadow: 0 22px 45px rgba(0, 0, 0, 0.05), 0 0 25px rgba(11, 87, 255, 0.03);
+  border-color: rgba(0, 162, 255, 0.28);
+  box-shadow: 0 22px 45px rgba(0, 0, 0, 0.05), 0 0 25px rgba(0, 162, 255, 0.03);
 }
 
 @keyframes ring-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(11, 87, 255, 0.25);
+    box-shadow: 0 0 0 0 rgba(0, 162, 255, 0.25);
   }
   70% {
-    box-shadow: 0 0 0 8px rgba(11, 87, 255, 0);
+    box-shadow: 0 0 0 8px rgba(0, 162, 255, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(11, 87, 255, 0);
+    box-shadow: 0 0 0 0 rgba(0, 162, 255, 0);
   }
 }
 
 .avatar-ring-pulse {
   animation: ring-pulse 3s infinite;
+}
+
+/* Override Bootstrap Primary Colors to align with brand logo blue */
+.text-primary {
+  color: var(--flux-primary) !important;
+}
+.bg-primary {
+  background-color: var(--flux-primary) !important;
+}
+.btn-primary {
+  background-color: var(--flux-primary) !important;
+  border-color: var(--flux-primary) !important;
+}
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+  background-color: #0056cc !important;
+  border-color: #0056cc !important;
+}
+.border-primary {
+  border-color: var(--flux-primary) !important;
+}
+.bg-primary-glow {
+  background-color: var(--flux-primary-glow) !important;
+}
+
+@keyframes spin-reverse {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.spin-reverse {
+  animation: spin-reverse 25s linear infinite;
+}
+
+@keyframes ping {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  70%, 100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.animate-ping {
+  animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
 }

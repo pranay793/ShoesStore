@@ -130,14 +130,14 @@ export const ProductCard = ({ product }) => {
             <div className="bg-light p-4 rounded-4 d-flex align-items-center justify-content-center position-relative mb-3" style={{
               height: '220px',
               overflow: 'hidden',
-              background: 'radial-gradient(circle, rgba(11, 87, 255, 0.05) 0%, rgba(248, 249, 252, 1) 100%)'
+              background: 'radial-gradient(circle, rgba(0, 162, 255, 0.05) 0%, rgba(248, 249, 252, 1) 100%)'
             }}>
               {/* Radial Blur Backdrop behind shoe */}
               <div style={{
                 position: 'absolute',
                 width: '120px',
                 height: '120px',
-                background: hovered ? 'rgba(0, 229, 255, 0.25)' : 'rgba(11, 87, 255, 0.12)',
+                background: hovered ? 'rgba(0, 229, 255, 0.25)' : 'rgba(0, 162, 255, 0.12)',
                 filter: 'blur(20px)',
                 borderRadius: '50%',
                 zIndex: 0,

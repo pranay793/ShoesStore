@@ -18,7 +18,7 @@ export const FilterSidebar = ({
 }) => {
   const categories = ["Running", "Training", "Trail Running", "Lifestyle", "Professional", "Walking"];
   const colors = [
-    { name: "Blue", code: "#0B57FF" },
+    { name: "Blue", code: "#00A2FF" },
     { name: "Black", code: "#111111" },
     { name: "White", code: "#FFFFFF" },
     { name: "Red", code: "#FF3B30" },

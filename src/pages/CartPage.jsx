@@ -188,7 +188,7 @@ export const CartPage = () => {
                 {/* Promo Code Fields */}
                 <div className="mb-4">
                   {promoApplied ? (
-                    <div className="d-flex justify-content-between align-items-center bg-primary-glow border border-primary-50 rounded-4 p-3 mb-2" style={{ backgroundColor: 'rgba(11, 87, 255, 0.1)' }}>
+                    <div className="d-flex justify-content-between align-items-center bg-primary-glow border border-primary-50 rounded-4 p-3 mb-2" style={{ backgroundColor: 'rgba(0, 162, 255, 0.1)' }}>
                       <div className="d-flex align-items-center gap-2">
                         <Ticket size={18} className="text-primary" />
                         <div>

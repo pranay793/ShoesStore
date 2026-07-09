@@ -111,7 +111,7 @@ export const ProductDetails = () => {
                 style={{ 
                   height: '420px', 
                   borderRadius: '24px',
-                  background: 'radial-gradient(circle, rgba(11, 87, 255, 0.04) 0%, rgba(248, 249, 252, 1) 100%)',
+                  background: 'radial-gradient(circle, rgba(0, 162, 255, 0.04) 0%, rgba(248, 249, 252, 1) 100%)',
                   overflow: 'hidden'
                 }}
                 onMouseEnter={() => setZoomed(true)}

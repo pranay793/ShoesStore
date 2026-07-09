@@ -25,7 +25,7 @@ export const products = [
       "Best For": "Road Running, Marathons"
     },
     colors: [
-      { name: "Blue", code: "#0B57FF" },
+      { name: "Blue", code: "#00A2FF" },
       { name: "Black", code: "#111111" },
       { name: "White", code: "#FFFFFF" }
     ],
@@ -212,7 +212,7 @@ export const products = [
     },
     colors: [
       { name: "Grey", code: "#8E8E93" },
-      { name: "Blue", code: "#0B57FF" }
+      { name: "Blue", code: "#00A2FF" }
     ],
     sizes: [7, 8, 9, 10, 11, 12],
     image: "https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?w=800&auto=format&fit=crop&q=80",
@@ -248,7 +248,7 @@ export const products = [
       "Best For": "Off-Road Trails, Rocky Slopes"
     },
     colors: [
-      { name: "Blue", code: "#0B57FF" },
+      { name: "Blue", code: "#00A2FF" },
       { name: "Orange", code: "#FF9500" }
     ],
     sizes: [8, 9, 10, 11, 12],
@@ -356,7 +356,7 @@ export const products = [
       "Best For": "High Mileage Recovery, Knee Protection"
     },
     colors: [
-      { name: "Blue", code: "#0B57FF" },
+      { name: "Blue", code: "#00A2FF" },
       { name: "Black", code: "#111111" }
     ],
     sizes: [7, 8, 9, 10, 11, 12],

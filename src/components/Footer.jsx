@@ -125,7 +125,7 @@ export const Footer = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="bg-primary-glow text-primary rounded-4 p-3 border border-primary-50 small"
-                style={{ backgroundColor: 'rgba(11, 87, 255, 0.15)', borderColor: 'rgba(11, 87, 255, 0.3)' }}
+                style={{ backgroundColor: 'rgba(0, 162, 255, 0.15)', borderColor: 'rgba(0, 162, 255, 0.3)' }}
               >
                 🎉 Welcome to the club! Check your inbox for your code.
               </motion.div>

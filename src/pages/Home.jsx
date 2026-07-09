@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useMotionValueEvent, useSpring } from 'framer-motion';
 import { ShopContext } from '../context/ShopContext';
 import { ProductCard } from '../components/ProductCard';
 import { 
@@ -13,12 +13,10 @@ export const Home = () => {
   const [activeTab, setActiveTab] = useState('new'); // new, top, limited
   const [isVideoOpen, setIsVideoOpen] = useState(false);
 
-  // Handle window width for responsive testimonial card stacks
+  // Handle window width for responsive layout
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
-
-
 
   useEffect(() => {
     const handleResize = () => {
@@ -36,55 +34,102 @@ export const Home = () => {
 
   const isMobile = windowWidth < 768;
 
+  // --- HERO PARALLAX COORDINATE TRACKING ---
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const handleHeroMouseMove = (e) => {
+    const { clientX, clientY, currentTarget } = e;
+    const { left, top, width, height } = currentTarget.getBoundingClientRect();
+    const x = (clientX - left - width / 2) / (width / 2); // -1 to 1
+    const y = (clientY - top - height / 2) / (height / 2); // -1 to 1
+    setCoords({ x, y });
+  };
+  const handleHeroMouseLeave = () => {
+    setCoords({ x: 0, y: 0 });
+  };
+
   // --- HERO SLIDER STATE & DATA ---
   const [heroIndex, setHeroIndex] = useState(0);
+  const [activeVariants, setActiveVariants] = useState({ 0: 0, 1: 0, 2: 0 });
+
   const heroSlides = [
     {
+      brand: "NIKE",
       title: "NIKE VAPORFLY RACING",
       subtitle: "THE RECORD CHASER",
       tagline: "Run Beyond Limits",
-      desc: "Full-length carbon fiber launch plates trigger continuous forward torque for racing speeds. shatters personal records on asphalt.",
-      image: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=1200&auto=format&fit=crop&q=80",
+      backdropText: "JUST DO IT",
+      desc: "Full-length carbon fiber launch plates trigger continuous forward torque for racing speeds. Shatters personal records on asphalt.",
       stats: [{ val: "190g", label: "Elite weight" }, { val: "88%", label: "Energy Return" }],
       tagColor: "var(--flux-primary)",
-      glowColor: "rgba(11, 87, 255, 0.25)"
+      glowColor: "rgba(0, 162, 255, 0.22)",
+      athleteImage: "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=800&auto=format&fit=crop&q=80",
+      variants: [
+        { name: "Electric Neon", code: "#39FF14", image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5816.png" },
+        { name: "Active Blue", code: "#006BFF", image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5813.png" },
+        { name: "Hyper Red", code: "#FF3B30", image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5812.png" }
+      ],
+      ctaText: "Shop Nike Collection",
+      ctaLink: "/catalog?category=Running"
     },
     {
-      title: "NIKE AIR MAX PREMIUM",
-      subtitle: "UNLIMITED IMPACT CONTROLS",
-      tagline: "Air-Infused Stride Dynamics",
-      desc: "Vacuum-pressured visible Air units supply localized cushioning to soften heel landings and prevent stride fatigue.",
-      image: "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=1200&auto=format&fit=crop&q=80",
-      stats: [{ val: "12mm", label: "Max Cushion" }, { val: "25%", label: "Impact Relief" }],
-      tagColor: "var(--flux-danger)",
-      glowColor: "rgba(255, 59, 48, 0.2)"
+      brand: "ADIDAS",
+      title: "ADIDAS ULTRABOOST 5.0",
+      subtitle: "ENERGY RETURN SYSTEMS",
+      tagline: "Ultra Energy Rebounds",
+      backdropText: "RUN FOR MORE",
+      desc: "Revolutionary Boost capsules deliver incredible energy return and instant comfort. High-performance knit upper conforms to your foot.",
+      stats: [{ val: "Boost™", label: "Midsole Tech" }, { val: "Continental™", label: "Outsole Grip" }],
+      tagColor: "#111111",
+      glowColor: "rgba(17, 17, 17, 0.15)",
+      athleteImage: "https://images.unsplash.com/photo-1530143311094-34d807799e8f?w=800&auto=format&fit=crop&q=80",
+      variants: [
+        { name: "Core Gray", code: "#8E8E93", image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5823.png" },
+        { name: "Triple Black", code: "#1C1C1E", image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5827.png" }
+      ],
+      ctaText: "Shop Adidas Collection",
+      ctaLink: "/catalog?category=Lifestyle"
     },
     {
-      title: "NIKE PEGASUS ZOOM",
-      subtitle: "FLY HIGH. RUN SOFT.",
-      tagline: "Responsive Flywire Lockdown",
-      desc: "High-density cable grids wrap the midfoot arches for responsive security at top velocity. Crafted for daily training.",
-      image: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=1200&auto=format&fit=crop&q=80",
-      stats: [{ val: "215g", label: "Featherweight" }, { val: "React", label: "Midsole Tech" }],
-      tagColor: "var(--flux-accent)",
-      glowColor: "rgba(0, 229, 255, 0.2)"
+      brand: "PUMA",
+      title: "PUMA DEVIATE NITRO 2",
+      subtitle: "PROPULSIVE PERFORMANCE",
+      tagline: "Forever Faster Velocity",
+      backdropText: "FOREVER FASTER",
+      desc: "Features premium Nitro Elite foam for maximum propulsion and carbon-composite plate engineering to stabilize quick transitions.",
+      stats: [{ val: "Nitro™", label: "Elite Cushion" }, { val: "PumaGrip", label: "High Traction" }],
+      tagColor: "#FF5A00",
+      glowColor: "rgba(255, 90, 0, 0.2)",
+      athleteImage: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&auto=format&fit=crop&q=80",
+      variants: [
+        { name: "Nitro Lava", code: "#FF5A00", image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5782.png" },
+        { name: "Stealth Amber", code: "#FFCC00", image: "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5786.png" }
+      ],
+      ctaText: "Shop Puma Collection",
+      ctaLink: "/catalog?category=Training"
     }
   ];
 
-  // Auto slide hero banner
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setHeroIndex((prev) => (prev + 1) % heroSlides.length);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, []);
-
+  // Scroll-linked navigation for the Hero section
   const nextHero = () => {
-    setHeroIndex((heroIndex + 1) % heroSlides.length);
+    const nextIdx = (heroIndex + 1) % heroSlides.length;
+    scrollToHeroSlide(nextIdx);
   };
   
   const prevHero = () => {
-    setHeroIndex((heroIndex - 1 + heroSlides.length) % heroSlides.length);
+    const prevIdx = (heroIndex - 1 + heroSlides.length) % heroSlides.length;
+    scrollToHeroSlide(prevIdx);
+  };
+
+  const scrollToHeroSlide = (sIdx) => {
+    const targetScroll = sIdx * 0.33 + 0.16;
+    const element = heroScrollContainerRef.current;
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      const globalTop = rect.top + window.scrollY;
+      const sectionHeight = rect.height;
+      const targetY = globalTop + (targetScroll * (sectionHeight - window.innerHeight));
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    }
   };
 
   // --- TESTIMONIALS SLIDER STATE & DATA ---
@@ -157,7 +202,6 @@ export const Home = () => {
     return () => clearInterval(timer);
   }, [maxIndex]);
 
-
   // Filter products for tabs
   const getTabProducts = () => {
     switch (activeTab) {
@@ -171,12 +215,285 @@ export const Home = () => {
     }
   };
 
-  // Benefits
-  const benefits = [
-    { icon: <Layers size={24} />, title: "Carbon Plate Tech", desc: "Full length snap-action carbon plate drives you forward with every stride." },
-    { icon: <Wind size={24} />, title: "AirWeave Upper", desc: "Seamless breathable engineered knit fits like a sock, cooling you down." },
-    { icon: <Zap size={24} />, title: "EnergyFloat Foam", desc: "Proprietary gas-infused midsole returns 85% of your landing energy." },
-    { icon: <Activity size={24} />, title: "VibramGrip Lugging", desc: "Ultra traction rubber prevents sliding on mud, wet concrete, and trails." }
+  // --- 3D HERO BANNER SCROLL ANIMATION STATES & HOOKS ---
+  const heroScrollContainerRef = useRef(null);
+  const heroCanvasRef = useRef(null);
+  const heroImagesRef = useRef([]);
+  const [isHeroImagesLoaded, setIsHeroImagesLoaded] = useState(false);
+  const [heroLoadingProgress, setHeroLoadingProgress] = useState(0);
+
+  // Preload hero runner images
+  useEffect(() => {
+    let loadedCount = 0;
+    const totalFrames = 240;
+    heroImagesRef.current = [];
+
+    // Preload frame 1 first to display it immediately
+    const firstImg = new Image();
+    firstImg.src = `/Hero-Animation/ezgif-frame-001.png`;
+    firstImg.onload = () => {
+      heroImagesRef.current[1] = firstImg;
+      drawHeroFrame(1);
+      setIsHeroImagesLoaded(true); // FADE IN SITE IMMEDIATELY ON FRAME 1 LOADED!
+
+      // Load all other frames asynchronously in the background
+      for (let i = 2; i <= totalFrames; i++) {
+        const img = new Image();
+        const frameNum = String(i).padStart(3, '0');
+        img.src = `/Hero-Animation/ezgif-frame-${frameNum}.png`;
+        img.onload = () => {
+          heroImagesRef.current[i] = img;
+          loadedCount++;
+          setHeroLoadingProgress(Math.round((loadedCount / (totalFrames - 1)) * 100));
+        };
+        img.onerror = () => {
+          loadedCount++;
+        };
+      }
+    };
+    firstImg.onerror = () => {
+      // Fallback in case of absolute failure
+      setIsHeroImagesLoaded(true);
+    };
+  }, []);
+
+  const drawHeroFrame = (index) => {
+    const canvas = heroCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    let img = heroImagesRef.current[index];
+    if (!img) {
+      for (let offset = 1; offset < 240; offset++) {
+        if (index - offset >= 1 && heroImagesRef.current[index - offset]) {
+          img = heroImagesRef.current[index - offset];
+          break;
+        }
+        if (index + offset <= 240 && heroImagesRef.current[index + offset]) {
+          img = heroImagesRef.current[index + offset];
+          break;
+        }
+      }
+    }
+    
+    if (img) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    }
+  };
+
+  const { scrollYProgress: heroScrollProgress } = useScroll({
+    target: heroScrollContainerRef,
+    offset: ["start start", "end end"]
+  });
+
+  const smoothHeroProgress = useSpring(heroScrollProgress, {
+    stiffness: 80,
+    damping: 26,
+    mass: 0.5
+  });
+
+  useMotionValueEvent(smoothHeroProgress, "change", (latest) => {
+    if (isHeroImagesLoaded) {
+      const totalFrames = 240;
+      const index = Math.min(
+        totalFrames,
+        Math.max(1, Math.floor(latest * (totalFrames - 1)) + 1)
+      );
+      drawHeroFrame(index);
+    }
+
+    // Map scroll progress to text slides Nike (0-33%), Adidas (33-66%), Puma (66-100%)
+    let newIdx = 0;
+    if (latest >= 0.66) {
+      newIdx = 2;
+    } else if (latest >= 0.33) {
+      newIdx = 1;
+    } else {
+      newIdx = 0;
+    }
+
+    setHeroIndex((prev) => {
+      if (prev !== newIdx) return newIdx;
+      return prev;
+    });
+  });
+
+  // --- 3D PRODUCT DECONSTRUCT SCROLL ANIMATION STATES & HOOKS ---
+  const scrollContainerRef = useRef(null);
+  const canvasRef = useRef(null);
+  const imagesRef = useRef([]);
+  const [activeSpecIndex, setActiveSpecIndex] = useState(0);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isImagesLoaded, setIsImagesLoaded] = useState(false);
+  const [currentFrame, setCurrentFrame] = useState(1);
+  const [scrollPct, setScrollPct] = useState(0);
+
+  // Preload images
+  useEffect(() => {
+    let loadedCount = 0;
+    const totalFrames = 240;
+    imagesRef.current = [];
+
+    for (let i = 1; i <= totalFrames; i++) {
+      const img = new Image();
+      const frameNum = String(i).padStart(3, '0');
+      img.src = `/Animation-images/ezgif-frame-${frameNum}.png`;
+      img.onload = () => {
+        imagesRef.current[i] = img;
+        loadedCount++;
+        setLoadingProgress(Math.round((loadedCount / totalFrames) * 100));
+        
+        // Render first frame immediately once it is loaded
+        if (i === 1) {
+          drawFrame(1);
+        }
+        
+        if (loadedCount === totalFrames) {
+          setIsImagesLoaded(true);
+        }
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === totalFrames) {
+          setIsImagesLoaded(true);
+        }
+      };
+    }
+  }, []);
+
+  const drawFrame = (index) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    let img = imagesRef.current[index];
+    if (!img) {
+      for (let offset = 1; offset < 240; offset++) {
+        if (index - offset >= 1 && imagesRef.current[index - offset]) {
+          img = imagesRef.current[index - offset];
+          break;
+        }
+        if (index + offset <= 240 && imagesRef.current[index + offset]) {
+          img = imagesRef.current[index + offset];
+          break;
+        }
+      }
+    }
+    
+    if (img) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Fill canvas background to match image background color
+      ctx.fillStyle = '#0a090c';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw image scaled down and centered
+      const scale = 1.0;
+      const w = canvas.width * scale;
+      const h = canvas.height * scale;
+      const x = (canvas.width - w) / 2;
+      const y = (canvas.height - h) / 2;
+      ctx.drawImage(img, x, y, w, h);
+    }
+  };
+
+  const scrollToLayer = (sIdx) => {
+    const targetScroll = sIdx * 0.25 + 0.12;
+    const element = scrollContainerRef.current;
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      const globalTop = rect.top + window.scrollY;
+      const sectionHeight = rect.height;
+      const targetY = globalTop + (targetScroll * (sectionHeight - window.innerHeight));
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    }
+  };
+
+
+
+  const { scrollYProgress } = useScroll({
+    target: scrollContainerRef,
+    offset: ["start start", "end end"]
+  });
+
+  // Smooth out scroll frames with spring physics to avoid stepped scrolling
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 80,
+    damping: 26,
+    mass: 0.5
+  });
+
+  useMotionValueEvent(smoothProgress, "change", (latest) => {
+    if (isImagesLoaded) {
+      const totalFrames = 240;
+      const index = Math.min(
+        totalFrames,
+        Math.max(1, Math.floor(latest * (totalFrames - 1)) + 1)
+      );
+      drawFrame(index);
+      setCurrentFrame(index);
+    }
+    setScrollPct(Math.round(latest * 100));
+
+    let newIdx = 0;
+    if (latest >= 0.75) {
+      newIdx = 3;
+    } else if (latest >= 0.50) {
+      newIdx = 2;
+    } else if (latest >= 0.25) {
+      newIdx = 1;
+    } else {
+      newIdx = 0;
+    }
+    
+    setActiveSpecIndex((prev) => {
+      if (prev !== newIdx) return newIdx;
+      return prev;
+    });
+  });
+
+  const specData = [
+    {
+      title: "Carbon Plate Tech",
+      icon: <Layers size={24} />,
+      desc: "Full-length curved carbon fiber launch plate stabilizes quick transitions and drives you forward with every stride.",
+      highlights: ["High torsional stiffness", "Elite energy transmission", "Propulsive takeoff torque"],
+      color: "var(--flux-primary)",
+      glow: "rgba(0, 162, 255, 0.4)",
+      marker: { top: 64, left: 45 },
+      labelPos: { top: 48, left: 24 }
+    },
+    {
+      title: "AirWeave Upper",
+      icon: <Wind size={24} />,
+      desc: "Engineered single-layer knit upper provides structural stretch support, multi-directional airflow, and runs like a second skin.",
+      highlights: ["Micro-climate ventilation", "Zero-friction collar", "Recycled polymer weave"],
+      color: "var(--flux-accent)",
+      glow: "rgba(0, 229, 255, 0.4)",
+      marker: { top: 34, left: 56 },
+      labelPos: { top: 16, left: 74 }
+    },
+    {
+      title: "EnergyFloat Foam",
+      icon: <Zap size={24} />,
+      desc: "Supercritical gas-infused nitrogen foam cushioning absorbs peak shock forces and delivers a springy rebound.",
+      highlights: ["85% energy return rate", "Hyper-light density", "Impact strain reduction"],
+      color: "var(--flux-success)",
+      glow: "rgba(0, 200, 83, 0.4)",
+      marker: { top: 54, left: 48 },
+      labelPos: { top: 36, left: 78 }
+    },
+    {
+      title: "VibramGrip Outsole",
+      icon: <Activity size={24} />,
+      desc: "Formulated high-friction sticky rubber compound with multi-directional lugs prevents slippage on challenging terrain.",
+      highlights: ["All-weather wet traction", "Self-cleaning channels", "Extended wear durability"],
+      color: "#FF5A00",
+      glow: "rgba(255, 90, 0, 0.4)",
+      marker: { top: 70, left: 38 },
+      labelPos: { top: 48, left: 16 }
+    }
   ];
 
   // Timeline
@@ -187,226 +504,479 @@ export const Home = () => {
     { year: "2026", title: "Future Vector", desc: "Introducing neural foot tracking overlays for personalized stride tuning." }
   ];
 
+  const getPositionClasses = (idx) => {
+    if (idx === 1) {
+      return {
+        col: "col-12 col-md-8 col-lg-7 col-xl-6 offset-md-4 offset-lg-5 text-center text-lg-end",
+        btn: "d-flex flex-column flex-sm-row justify-content-center justify-content-lg-end gap-3"
+      };
+    } else if (idx === 2) {
+      return {
+        col: "col-12 col-md-10 col-lg-8 offset-md-1 offset-lg-2 text-center text-lg-center",
+        btn: "d-flex flex-column flex-sm-row justify-content-center justify-content-lg-center gap-3"
+      };
+    } else {
+      return {
+        col: "col-12 col-md-8 col-lg-7 col-xl-6 text-center text-lg-start",
+        btn: "d-flex flex-column flex-sm-row justify-content-center justify-content-lg-start gap-3"
+      };
+    }
+  };
+
   const currentHero = heroSlides[heroIndex];
+  const activeVariantIdx = activeVariants[heroIndex] || 0;
+  const currentHeroImage = currentHero.variants[activeVariantIdx].image;
+
+  const getScaledCoords = (coords, scale = 1.0) => {
+    return {
+      top: 50 + (coords.top - 50) * scale,
+      left: 50 + (coords.left - 50) * scale
+    };
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.05
+      }
+    },
+    exit: {
+      opacity: 0,
+      transition: {
+        staggerChildren: 0.05,
+        staggerDirection: -1
+      }
+    }
+  };
+
+  const brandVariants = {
+    hidden: { x: -120, opacity: 0 },
+    visible: { 
+      x: 0, 
+      opacity: 1,
+      transition: { type: 'spring', stiffness: 100, damping: 15 }
+    },
+    exit: { 
+      x: -80, 
+      opacity: 0,
+      transition: { duration: 0.2, ease: 'easeIn' }
+    }
+  };
+
+  const titleVariants = {
+    hidden: { x: 120, opacity: 0 },
+    visible: { 
+      x: 0, 
+      opacity: 1,
+      transition: { type: 'spring', stiffness: 100, damping: 15 }
+    },
+    exit: { 
+      x: 80, 
+      opacity: 0,
+      transition: { duration: 0.2, ease: 'easeIn' }
+    }
+  };
+
+  const descVariants = {
+    hidden: { y: 40, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
+    },
+    exit: { 
+      y: -30, 
+      opacity: 0,
+      transition: { duration: 0.2, ease: 'easeIn' }
+    }
+  };
+
+  const buttonVariants = {
+    hidden: { scale: 0.75, opacity: 0 },
+    visible: { 
+      scale: 1, 
+      opacity: 1,
+      transition: { type: 'spring', stiffness: 150, damping: 12 }
+    },
+    exit: { 
+      scale: 0.85, 
+      opacity: 0,
+      transition: { duration: 0.2, ease: 'easeIn' }
+    }
+  };
 
   return (
-    <div style={{ backgroundColor: 'var(--flux-background)', overflowX: 'hidden' }}>
+    <div style={{ backgroundColor: 'var(--flux-background)', overflowX: 'clip' }}>
       
-      {/* REDESIGNED HERO SECTION WITH SLIDER */}
-      <section className="position-relative overflow-hidden py-5 d-flex align-items-center" style={{
-        minHeight: '85vh',
-        background: 'radial-gradient(circle at 80% 20%, rgba(17,17,17,0.03) 0%, rgba(248, 249, 252, 1) 100%)'
-      }}>
-        {/* Glow lights mapping active slide */}
-        <div style={{
-          position: 'absolute',
-          width: '450px',
-          height: '450px',
-          borderRadius: '50%',
-          background: currentHero.glowColor,
-          filter: 'blur(60px)',
-          top: '10%',
-          right: '5%',
-          pointerEvents: 'none',
-          zIndex: 0,
-          transition: 'background 0.5s ease-in-out'
-        }} />
+      {/* REDESIGNED HERO SECTION WITH SCROLL-DRIVEN RUNNER ANIMATION */}
+      <section 
+        ref={heroScrollContainerRef}
+        className="position-relative w-100" 
+        style={{
+          minHeight: '320vh',
+          backgroundColor: '#0a090c',
+          zIndex: 10
+        }}
+      >
+        {/* Sticky viewport content container (sticks below navbar) */}
+        <div 
+          style={{ 
+            position: 'sticky', 
+            top: '0px', 
+            height: '100vh', 
+            overflow: 'hidden',
+            backgroundColor: '#0a090c'
+          }}
+          className="w-100"
+          onMouseMove={handleHeroMouseMove}
+          onMouseLeave={handleHeroMouseLeave}
+        >
+          {/* Full-width Canvas Background */}
+          <motion.div 
+            animate={{ 
+              x: coords.x * 20, 
+              y: coords.y * 20
+            }}
+            transition={{ type: 'spring', damping: 26, stiffness: 100 }}
+            className="position-absolute"
+            style={{ 
+              zIndex: 1,
+              top: '-30px',
+              left: '-30px',
+              width: 'calc(100% + 60px)',
+              height: 'calc(100% + 60px)'
+            }}
+          >
+            <canvas 
+              ref={heroCanvasRef} 
+              width={1920} 
+              height={1080} 
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'cover',
+                objectPosition: windowWidth < 768 ? '65% center' : 'center 28%'
+              }} 
+            />
+          </motion.div>
 
-        <div className="container position-relative" style={{ zIndex: 1 }}>
-          <div className="row align-items-center g-5">
-            
-            {/* Hero Content Left */}
-            <div className="col-lg-6 text-center text-lg-start">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={heroIndex}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <div className="d-inline-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill shadow-sm border border-light mb-3">
-                    <span className="badge rounded-pill px-2 py-1 small" style={{ backgroundColor: currentHero.tagColor }}>
-                      {currentHero.tagline.toUpperCase()}
-                    </span>
-                    <span className="text-secondary small fw-bold d-flex align-items-center gap-1">
-                      {currentHero.subtitle} <Sparkles size={12} className="text-warning" />
-                    </span>
-                  </div>
+          {/* Cinematic Gradient Overlay for text readability */}
+          <div 
+            className="position-absolute inset-0 w-100 h-100" 
+            style={{ 
+              zIndex: 2, 
+              background: windowWidth < 992 
+                ? 'linear-gradient(to bottom, rgba(10,10,12,0.85) 0%, rgba(10,10,12,0.5) 50%, rgba(10,10,12,0.9) 100%)'
+                : 'linear-gradient(to right, rgba(10,10,12,0.85) 0%, rgba(10,10,12,0.4) 50%, rgba(10,10,12,0.1) 100%)',
+              pointerEvents: 'none'
+            }}
+          />
 
-                  <h1 className="display-4 fw-extrabold tracking-tight mb-3 font-display text-uppercase" style={{ lineHeight: '1.1' }}>
-                    {currentHero.title.split(' ')[0]} <br />
-                    <span className="text-gradient">{currentHero.title.split(' ').slice(1).join(' ')}</span>
-                  </h1>
+          {/* Huge Backdrop Brand Slogan */}
+          <div style={{
+            position: 'absolute',
+            fontSize: '14vw',
+            fontWeight: '900',
+            color: 'rgba(255, 255, 255, 0.02)',
+            top: '45%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 3,
+            whiteSpace: 'nowrap',
+            userSelect: 'none',
+            fontFamily: 'var(--font-display)',
+            textTransform: 'uppercase',
+            letterSpacing: '-2px',
+            pointerEvents: 'none'
+          }}>
+            {currentHero.backdropText}
+          </div>
 
-                  <p className="lead text-muted mb-4 px-md-5 px-lg-0" style={{ fontSize: '1.05rem' }}>
-                    {currentHero.desc}
-                  </p>
+          {/* Dynamic Glow Lights mapping active slide */}
+          <div style={{
+            position: 'absolute',
+            width: '500px',
+            height: '500px',
+            borderRadius: '50%',
+            background: currentHero.glowColor,
+            filter: 'blur(90px)',
+            opacity: 0.15,
+            top: '15%',
+            right: '8%',
+            pointerEvents: 'none',
+            zIndex: 3,
+            transition: 'background 0.6s ease-in-out'
+          }} />
 
-                  <div className="d-flex flex-column flex-sm-row justify-content-center justify-content-lg-start gap-3 mb-5">
-                    <Link to="/catalog" className="btn btn-flux-primary d-flex align-items-center justify-content-center gap-2">
-                      <span>Shop Nike Collection</span>
-                      <ChevronRight size={18} />
-                    </Link>
-                    <a href="#about" className="btn btn-flux-secondary d-flex align-items-center justify-content-center gap-2">
-                      <Play size={16} fill="currentColor" />
-                      <span>Deflection Specs</span>
-                    </a>
-                  </div>
-
-                  {/* Active Stats */}
-                  <div className="row g-4 justify-content-center justify-content-lg-start">
-                    {currentHero.stats.map((s, idx) => (
-                      <div key={idx} className="col-4 col-sm-3 text-center text-lg-start">
-                        <h3 className="h2 fw-bold text-dark mb-0 font-display">{s.val}</h3>
-                        <span className="small text-muted">{s.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Hero Image Right (Slider with overlay angle checks) */}
-            <div className="col-lg-6 position-relative d-flex justify-content-center align-items-center">
-              {/* Outer Slider Navigation Arrows */}
-              <button 
-                onClick={prevHero}
-                className="btn btn-light rounded-circle shadow-sm border d-flex align-items-center justify-content-center p-2 position-absolute"
-                style={{ left: '-25px', zIndex: 10, width: '44px', height: '44px', backgroundColor: 'rgba(255,255,255,0.85)' }}
-              >
-                <ChevronLeft size={20} />
-              </button>
-
-              <button 
-                onClick={nextHero}
-                className="btn btn-light rounded-circle shadow-sm border d-flex align-items-center justify-content-center p-2 position-absolute"
-                style={{ right: '-25px', zIndex: 10, width: '44px', height: '44px', backgroundColor: 'rgba(255,255,255,0.85)' }}
-              >
-                <ChevronRight size={20} />
-              </button>
-
-              <div className="position-relative d-flex justify-content-center align-items-center" style={{ width: '100%', maxWidth: '480px', height: '360px' }}>
-                {/* Rotating Outer Ring */}
-                <div className="spin-slow position-absolute" style={{
-                  width: '320px',
-                  height: '320px',
-                  border: '2px dashed rgba(11, 87, 255, 0.12)',
-                  borderRadius: '50%',
-                  zIndex: 0
-                }} />
-
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={heroIndex}
-                    initial={{ opacity: 0, scale: 0.75, rotate: -25, y: 15 }}
-                    animate={{ opacity: 1, scale: 1, rotate: -12, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.75, rotate: -5, y: -15 }}
-                    transition={{ type: 'spring', damping: 20, stiffness: 120 }}
-                    src={currentHero.image}
-                    alt={currentHero.title}
-                    className="img-fluid position-relative"
-                    style={{
-                      zIndex: 2,
-                      filter: 'drop-shadow(0 25px 35px rgba(0, 0, 0, 0.18))',
-                      maxHeight: '270px',
-                      objectFit: 'contain'
-                    }}
-                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600'; }}
-                  />
-                </AnimatePresence>
-
-                {/* Floating active badges */}
-                <div className="glass-panel position-absolute px-3 py-2 text-dark shadow-sm d-flex align-items-center gap-2 border border-light" style={{ top: '15%', left: '0', zIndex: 3 }}>
-                  <Award className="text-primary" size={14} />
-                  <span className="small fw-bold">Nike ZoomX™</span>
-                </div>
+          {/* Preloader Overlay for Hero Animation */}
+          {!isHeroImagesLoaded && (
+            <div 
+              className="position-absolute inset-0 d-flex flex-column justify-content-center align-items-center p-4 text-center"
+              style={{ zIndex: 12, background: '#0a090c' }}
+            >
+              <div className="spinner-border text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
+                <span className="visually-hidden">Loading...</span>
               </div>
+              <h6 className="font-monospace text-uppercase text-white mb-2" style={{ letterSpacing: '1px' }}>Preloading 3D Cinematic...</h6>
+              <div className="progress w-25" style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                <div 
+                  className="progress-bar bg-primary" 
+                  role="progressbar" 
+                  style={{ width: `${heroLoadingProgress}%` }} 
+                />
+              </div>
+              <span className="small font-monospace text-white-50 mt-2" style={{ fontSize: '0.8rem' }}>{heroLoadingProgress}%</span>
+            </div>
+          )}
+
+          {/* Foreground Content Container */}
+          <div 
+            className="container-fluid px-4 px-md-5 position-relative h-100 d-flex align-items-center" 
+            style={{ 
+              zIndex: 5,
+              paddingTop: windowWidth < 992 ? '100px' : '130px',
+              paddingBottom: '50px'
+            }}
+          >
+            <div className="row w-100 align-items-center">
+              
+              {/* Hero Content dynamically positioned (Left, Right, Center) based on active slide */}
+              <div className={getPositionClasses(heroIndex).col}>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={heroIndex}
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    className={windowWidth < 768 ? "p-4 rounded-4" : ""}
+                    style={windowWidth < 768 ? {
+                      backgroundColor: 'rgba(10, 10, 12, 0.55)',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)'
+                    } : {}}
+                  >
+                    <motion.h2 
+                      variants={brandVariants}
+                      className="font-display text-uppercase text-white-50 mb-0 fw-bold tracking-wider"
+                      style={{ fontSize: '1.25rem', letterSpacing: '2px' }}
+                    >
+                      {currentHero.title.split(' ')[0]}
+                    </motion.h2>
+
+                    <motion.h1 
+                      variants={titleVariants}
+                      className="display-4 fw-extrabold tracking-tight mb-3 font-display text-uppercase text-white" 
+                      style={{ lineHeight: '1.05', letterSpacing: '-1.5px', fontSize: 'calc(1.8rem + 2.5vw)' }}
+                    >
+                      <span style={{ 
+                        background: `linear-gradient(135deg, #ffffff 0%, var(--flux-primary) 100%)`,
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        color: 'transparent',
+                        WebkitTextFillColor: 'transparent',
+                        fontWeight: 800,
+                        display: 'inline-block'
+                      }}>
+                        {currentHero.title.split(' ').slice(1).join(' ')}
+                      </span>
+                    </motion.h1>
+
+                    <motion.p 
+                      variants={descVariants}
+                      className="lead text-white-50 mb-4 px-md-5 px-lg-0" 
+                      style={{ fontSize: '1.05rem', lineHeight: '1.5' }}
+                    >
+                      {currentHero.desc}
+                    </motion.p>
+
+                    <motion.div 
+                      variants={buttonVariants}
+                      className={getPositionClasses(heroIndex).btn}
+                    >
+                      <Link to={currentHero.ctaLink} className="btn btn-flux-primary d-flex align-items-center justify-content-center gap-2 px-4 py-2.5" style={{ fontSize: '0.95rem' }}>
+                        <span>{currentHero.ctaText}</span>
+                        <ChevronRight size={18} />
+                      </Link>
+                      <a href="#about" className="btn btn-flux-secondary d-flex align-items-center justify-content-center gap-2 px-4 py-2.5 text-white border-white-30" style={{ fontSize: '0.95rem' }}>
+                        <Play size={16} fill="currentColor" />
+                        <span>Biomechanics Tech</span>
+                      </a>
+                    </motion.div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
             </div>
           </div>
 
-          {/* Slider Dot Indicators */}
-          <div className="d-flex justify-content-center gap-2 mt-5">
-            {heroSlides.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setHeroIndex(idx)}
-                className="btn p-0 border-0 rounded-circle"
-                style={{
-                  width: '10px',
-                  height: '10px',
-                  backgroundColor: heroIndex === idx ? 'var(--flux-primary)' : 'rgba(0,0,0,0.15)',
-                  transform: heroIndex === idx ? 'scale(1.25)' : 'scale(1)',
-                  transition: 'all 0.3s ease'
-                }}
-              />
-            ))}
+          {/* Slider Navigation & Dot Indicators (Bottom center overlay) */}
+          <div className="d-flex align-items-center justify-content-center gap-3 position-absolute start-50 translate-middle-x pb-4" style={{ bottom: '24px', zIndex: 10 }}>
+            <button 
+              onClick={prevHero} 
+              className="btn btn-link text-white-50 p-0 hover-white transition-all border-0 d-flex align-items-center justify-content-center"
+              style={{ width: '36px', height: '36px', background: 'rgba(255,255,255,0.08)', borderRadius: '50%', color: '#ffffff' }}
+              title="Previous Slide"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            
+            <div className="d-flex gap-2">
+              {heroSlides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => scrollToHeroSlide(idx)}
+                  className="btn p-0 border-0 rounded-circle"
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    backgroundColor: heroIndex === idx ? 'var(--flux-primary)' : 'rgba(255,255,255,0.3)',
+                    transform: heroIndex === idx ? 'scale(1.2)' : 'scale(1)',
+                    transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)'
+                  }}
+                  title={`Go to slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+
+            <button 
+              onClick={nextHero} 
+              className="btn btn-link text-white-50 p-0 hover-white transition-all border-0 d-flex align-items-center justify-content-center"
+              style={{ width: '36px', height: '36px', background: 'rgba(255,255,255,0.08)', borderRadius: '50%', color: '#ffffff' }}
+              title="Next Slide"
+            >
+              <ChevronRight size={18} />
+            </button>
           </div>
         </div>
       </section>
 
-      {/* TRUST BAR (MARQUEE) */}
-      <section className="py-4 border-top border-bottom border-light" style={{ backgroundColor: '#ffffff' }}>
+      {/* TRUST BAR (MARQUEE WITH BRAND INTERACTIVITY) */}
+      <section className="py-4 border-top border-bottom border-light" style={{ backgroundColor: '#ffffff', zIndex: 5, position: 'relative' }}>
         <div className="container-fluid px-0">
           <div className="marquee-container">
             <div className="marquee-content" style={{ gap: '8rem' }}>
-              {/* Brand Logos with Text (Nike, Adidas, Under Armour, New Balance, Converse, Reebok) */}
-              <div className="partner-brand"><svg viewBox="0 0 24 24" width="32" height="32"><path d="M21 6.5c-2.3 1.8-6.9 5-10.4 7.6-1.5 1.1-2.9 2-3.8 2.5-.9.4-1.4.5-1.7.5-.2 0-.3-.1-.3-.2 0-.2.2-.7.8-1.5.8-1 2.3-2.9 4.3-5.3.6-.7.5-1.2-.2-1-.7.2-2.1.8-3.9 1.8-1.8 1-3.6 2.3-4.8 3.5-1 1-.9 1.8.2 2 1.3.2 3.6-.3 6.3-1.6 4-1.9 9.9-6.4 13.7-9.6.2-.2.1-.2 0-.2z"/></svg><span>NIKE</span></div>
-              <div className="partner-brand"><svg viewBox="0 0 24 24" width="32" height="32"><path d="M1.5 20h3.5l4-7H5.5L1.5 20zm5 0h3.5l7-12.25h-3.5L6.5 20zm5 0h3.5L21.5 2.5H18L11.5 20z"/></svg><span>ADIDAS</span></div>
-              <div className="partner-brand"><svg viewBox="0 0 24 24" width="32" height="32"><path d="M12 3C9 3 6.5 5.2 6 8c2.2-.8 4-2.5 5-4.5 1 2 2.8 3.7 5 4.5-.5-2.8-3-5-6-5zm0 18c3 0 5.5-5.2 6-8-2.2.8-4 2.5-5 4.5-1-2-2.8-3.7-5-4.5.5 2.8 3 5 6 5z"/></svg><span>UNDER ARMOUR</span></div>
-              <div className="partner-brand"><svg viewBox="0 0 24 24" width="32" height="32"><path d="M4 18h2.5v-7l5.5 7h3V6h-2.5v7l-5.5-7H4v12zm11.5-12h6.5v2.5h-6.5V6zm0 4h6.5v2.5h-6.5v-2.5zm0 4h6.5v2.5h-6.5v-2.5z"/></svg><span>NEW BALANCE</span></div>
-              <div className="partner-brand"><svg viewBox="0 0 24 24" width="32" height="32"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M12 7.5l1.4 2.8 3.1.5-2.3 2.2.5 3.1-2.7-1.4-2.7 1.4.5-3.1-2.3-2.2 3.1-.5z"/></svg><span>CONVERSE</span></div>
-              <div className="partner-brand"><svg viewBox="0 0 24 24" width="32" height="32"><path d="M1.5 6L18 1.5l1.5 1L1.5 8z M1.5 18L18 22.5l1.5-1L1.5 16z M10 5.5l11.5 4v3L10 18.5z"/></svg><span>REEBOK</span></div>
-              {/* Loop Duplicate for Marquee */}
-              <div className="partner-brand"><svg viewBox="0 0 24 24" width="32" height="32"><path d="M21 6.5c-2.3 1.8-6.9 5-10.4 7.6-1.5 1.1-2.9 2-3.8 2.5-.9.4-1.4.5-1.7.5-.2 0-.3-.1-.3-.2 0-.2.2-.7.8-1.5.8-1 2.3-2.9 4.3-5.3.6-.7.5-1.2-.2-1-.7.2-2.1.8-3.9 1.8-1.8 1-3.6 2.3-4.8 3.5-1 1-.9 1.8.2 2 1.3.2 3.6-.3 6.3-1.6 4-1.9 9.9-6.4 13.7-9.6.2-.2.1-.2 0-.2z"/></svg><span>NIKE</span></div>
-              <div className="partner-brand"><svg viewBox="0 0 24 24" width="32" height="32"><path d="M1.5 20h3.5l4-7H5.5L1.5 20zm5 0h3.5l7-12.25h-3.5L6.5 20zm5 0h3.5L21.5 2.5H18L11.5 20z"/></svg><span>ADIDAS</span></div>
-              <div className="partner-brand"><svg viewBox="0 0 24 24" width="32" height="32"><path d="M12 3C9 3 6.5 5.2 6 8c2.2-.8 4-2.5 5-4.5 1 2 2.8 3.7 5 4.5-.5-2.8-3-5-6-5zm0 18c3 0 5.5-5.2 6-8-2.2.8-4 2.5-5 4.5-1-2-2.8-3.7-5-4.5.5 2.8 3 5 6 5z"/></svg><span>UNDER ARMOUR</span></div>
-              <div className="partner-brand"><svg viewBox="0 0 24 24" width="32" height="32"><path d="M4 18h2.5v-7l5.5 7h3V6h-2.5v7l-5.5-7H4v12zm11.5-12h6.5v2.5h-6.5V6zm0 4h6.5v2.5h-6.5v-2.5zm0 4h6.5v2.5h-6.5v-2.5z"/></svg><span>NEW BALANCE</span></div>
-              <div className="partner-brand"><svg viewBox="0 0 24 24" width="32" height="32"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M12 7.5l1.4 2.8 3.1.5-2.3 2.2.5 3.1-2.7-1.4-2.7 1.4.5-3.1-2.3-2.2 3.1-.5z"/></svg><span>CONVERSE</span></div>
-              <div className="partner-brand"><svg viewBox="0 0 24 24" width="32" height="32"><path d="M1.5 6L18 1.5l1.5 1L1.5 8z M1.5 18L18 22.5l1.5-1L1.5 16z M10 5.5l11.5 4v3L10 18.5z"/></svg><span>REEBOK</span></div>
+              {[
+                { name: "NIKE", color: "#FF5A00", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M21 6.5c-2.3 1.8-6.9 5-10.4 7.6-1.5 1.1-2.9 2-3.8 2.5-.9.4-1.4.5-1.7.5-.2 0-.3-.1-.3-.2 0-.2.2-.7.8-1.5.8-1 2.3-2.9 4.3-5.3.6-.7.5-1.2-.2-1-.7.2-2.1.8-3.9 1.8-1.8 1-3.6 2.3-4.8 3.5-1 1-.9 1.8.2 2 1.3.2 3.6-.3 6.3-1.6 4-1.9 9.9-6.4 13.7-9.6.2-.2.1-.2 0-.2z"/></svg> },
+                { name: "ADIDAS", color: "#006BFF", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M1.5 20h3.5l4-7H5.5L1.5 20zm5 0h3.5l7-12.25h-3.5L6.5 20zm5 0h3.5L21.5 2.5H18L11.5 20z"/></svg> },
+                { name: "UNDER ARMOUR", color: "#FF0000", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M12 3C9 3 6.5 5.2 6 8c2.2-.8 4-2.5 5-4.5 1 2 2.8 3.7 5 4.5-.5-2.8-3-5-6-5zm0 18c3 0 5.5-5.2 6-8-2.2.8-4 2.5-5 4.5-1-2-2.8-3.7-5-4.5.5 2.8 3 5 6 5z"/></svg> },
+                { name: "NEW BALANCE", color: "#CC0000", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M4 18h2.5v-7l5.5 7h3V6h-2.5v7l-5.5-7H4v12zm11.5-12h6.5v2.5h-6.5V6zm0 4h6.5v2.5h-6.5v-2.5zm0 4h6.5v2.5h-6.5v-2.5z"/></svg> },
+                { name: "CONVERSE", color: "#111111", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/><path d="M12 7.5l1.4 2.8 3.1.5-2.3 2.2.5 3.1-2.7-1.4-2.7 1.4.5-3.1-2.3-2.2 3.1-.5z" fill="currentColor"/></svg> },
+                { name: "PUMA", color: "#FF5A00", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M1.5 6L18 1.5l1.5 1L1.5 8z M1.5 18L18 22.5l1.5-1L1.5 16z M10 5.5l11.5 4v3L10 18.5z"/></svg> }
+              ].map((b, idx) => (
+                <div 
+                  key={idx} 
+                  className="partner-brand d-flex align-items-center gap-2 cursor-pointer transition-all"
+                  style={{
+                    color: '#6c757d',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = b.color;
+                    e.currentTarget.style.filter = `drop-shadow(0 0 10px ${b.color}40)`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = '#6c757d';
+                    e.currentTarget.style.filter = 'none';
+                  }}
+                >
+                  {b.svg}
+                  <span className="fw-bold tracking-wider">{b.name}</span>
+                </div>
+              ))}
+              {/* Loop Duplicate for Seamless Infinite Scrolling */}
+              {[
+                { name: "NIKE", color: "#FF5A00", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M21 6.5c-2.3 1.8-6.9 5-10.4 7.6-1.5 1.1-2.9 2-3.8 2.5-.9.4-1.4.5-1.7.5-.2 0-.3-.1-.3-.2 0-.2.2-.7.8-1.5.8-1 2.3-2.9 4.3-5.3.6-.7.5-1.2-.2-1-.7.2-2.1.8-3.9 1.8-1.8 1-3.6 2.3-4.8 3.5-1 1-.9 1.8.2 2 1.3.2 3.6-.3 6.3-1.6 4-1.9 9.9-6.4 13.7-9.6.2-.2.1-.2 0-.2z"/></svg> },
+                { name: "ADIDAS", color: "#006BFF", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M1.5 20h3.5l4-7H5.5L1.5 20zm5 0h3.5l7-12.25h-3.5L6.5 20zm5 0h3.5L21.5 2.5H18L11.5 20z"/></svg> },
+                { name: "UNDER ARMOUR", color: "#FF0000", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M12 3C9 3 6.5 5.2 6 8c2.2-.8 4-2.5 5-4.5 1 2 2.8 3.7 5 4.5-.5-2.8-3-5-6-5zm0 18c3 0 5.5-5.2 6-8-2.2.8-4 2.5-5 4.5-1-2-2.8-3.7-5-4.5.5 2.8 3 5 6 5z"/></svg> },
+                { name: "NEW BALANCE", color: "#CC0000", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M4 18h2.5v-7l5.5 7h3V6h-2.5v7l-5.5-7H4v12zm11.5-12h6.5v2.5h-6.5V6zm0 4h6.5v2.5h-6.5v-2.5zm0 4h6.5v2.5h-6.5v-2.5z"/></svg> },
+                { name: "CONVERSE", color: "#111111", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/><path d="M12 7.5l1.4 2.8 3.1.5-2.3 2.2.5 3.1-2.7-1.4-2.7 1.4.5-3.1-2.3-2.2 3.1-.5z" fill="currentColor"/></svg> },
+                { name: "PUMA", color: "#FF5A00", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M1.5 6L18 1.5l1.5 1L1.5 8z M1.5 18L18 22.5l1.5-1L1.5 16z M10 5.5l11.5 4v3L10 18.5z"/></svg> }
+              ].map((b, idx) => (
+                <div 
+                  key={`dup-${idx}`} 
+                  className="partner-brand d-flex align-items-center gap-2 cursor-pointer transition-all"
+                  style={{
+                    color: '#6c757d',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = b.color;
+                    e.currentTarget.style.filter = `drop-shadow(0 0 10px ${b.color}40)`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = '#6c757d';
+                    e.currentTarget.style.filter = 'none';
+                  }}
+                >
+                  {b.svg}
+                  <span className="fw-bold tracking-wider">{b.name}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* SHOP BY SPORT CATEGORIES */}
-      <section className="py-5">
+      {/* SHOP BY SPORT CATEGORIES WITH TILT EFFECTS & DETAILS OVERLAYS */}
+      <section className="py-5 bg-white border-bottom border-light">
         <div className="container">
           <div className="text-center mb-5">
-            <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2" style={{ backgroundColor: 'var(--flux-primary-glow)' }}>CATEGORIES</span>
+            <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2">COLLECTIONS</span>
             <h2 className="display-5 fw-bold font-display">SHOP BY SPORT</h2>
             <p className="text-muted">Aesthetic gear calibrated specifically for your focus</p>
           </div>
 
           <div className="row g-4">
             {[
-              { title: "Running", desc: "Energy & speed on asphalt", img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&auto=format&fit=crop&q=80", link: "/catalog?category=Running" },
-              { title: "Training", desc: "Stability & power in the gym", img: "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=400&auto=format&fit=crop&q=80", link: "/catalog?category=Training" },
-              { title: "Walking", desc: "All-day plush memory foam", img: "https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?w=400&auto=format&fit=crop&q=80", link: "/catalog?category=Walking" },
-              { title: "Lifestyle", desc: "Street design, active soul", img: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&auto=format&fit=crop&q=80", link: "/catalog?category=Lifestyle" }
+              { title: "Running", desc: "Energy & speed on asphalt", img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80", link: "/catalog?category=Running" },
+              { title: "Training", desc: "Stability & power in the gym", img: "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=600&auto=format&fit=crop&q=80", link: "/catalog?category=Training" },
+              { title: "Walking", desc: "All-day plush memory foam", img: "https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?w=600&auto=format&fit=crop&q=80", link: "/catalog?category=Walking" },
+              { title: "Lifestyle", desc: "Street design, active soul", img: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=80", link: "/catalog?category=Lifestyle" }
             ].map((cat, idx) => (
               <div key={idx} className="col-lg-3 col-md-6">
                 <Link to={cat.link} className="text-decoration-none">
                   <motion.div
-                    whileHover={{ y: -10 }}
-                    className="flux-card p-0 overflow-hidden text-white"
+                    whileHover={{ 
+                      y: -10,
+                      scale: 1.02,
+                      boxShadow: '0 20px 40px rgba(0, 162, 255, 0.15)'
+                    }}
+                    className="flux-card p-0 overflow-hidden text-white position-relative"
                     style={{
-                      height: '350px',
+                      height: '380px',
                       borderRadius: '24px',
-                      backgroundImage: `linear-gradient(to top, rgba(17,17,17,0.95) 0%, rgba(17,17,17,0.2) 60%, rgba(17,17,17,0) 100%), url(${cat.img})`,
+                      backgroundImage: `linear-gradient(to top, rgba(17,17,17,0.9) 0%, rgba(17,17,17,0.3) 50%, rgba(17,17,17,0) 100%), url(${cat.img})`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'flex-end',
-                      padding: '24px'
+                      border: '1px solid rgba(255, 255, 255, 0.08)'
                     }}
                   >
-                    <div className="p-3">
+                    {/* Hover Glow Accent */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '4px',
+                      background: 'var(--flux-primary)',
+                      transform: 'scaleX(0)',
+                      transformOrigin: 'left',
+                      transition: 'transform 0.4s'
+                    }} className="glow-bar" />
+
+                    <div className="p-4" style={{ zIndex: 2 }}>
                       <h4 className="fw-bold mb-1 text-white font-display">{cat.title}</h4>
                       <p className="small text-white-50 mb-0 d-flex align-items-center gap-1">
                         <span>{cat.desc}</span>
-                        <ArrowUpRight size={14} className="text-primary" />
+                        <ArrowUpRight size={15} className="text-primary" />
                       </p>
                     </div>
                   </motion.div>
@@ -418,11 +988,11 @@ export const Home = () => {
       </section>
 
       {/* FEATURED SNEAKERS GRID */}
-      <section className="py-5 bg-white border-top border-bottom border-light">
+      <section className="py-5 bg-white border-bottom border-light">
         <div className="container">
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-5">
             <div>
-              <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2" style={{ backgroundColor: 'var(--flux-primary-glow)' }}>FEATURED PRODUCTS</span>
+              <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2">FEATURED PRODUCTS</span>
               <h2 className="display-5 fw-bold font-display">TRENDING RELEASES</h2>
             </div>
             
@@ -432,10 +1002,12 @@ export const Home = () => {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`btn btn-sm px-4 rounded-pill border-0 py-2 small fw-bold font-monospace text-uppercase transition-all`}
+                  className="btn btn-sm px-4 rounded-pill border-0 py-2 small fw-bold font-monospace text-uppercase transition-all position-relative"
                   style={{
                     backgroundColor: activeTab === tab ? 'var(--flux-primary)' : 'transparent',
-                    color: activeTab === tab ? '#ffffff' : 'var(--flux-text-muted)'
+                    color: activeTab === tab ? '#ffffff' : 'var(--flux-text-muted)',
+                    boxShadow: activeTab === tab ? 'var(--shadow-glow)' : 'none',
+                    zIndex: 2
                   }}
                 >
                   {tab === 'new' ? 'New' : tab === 'top' ? 'Top Rated' : 'Limited'}
@@ -446,118 +1018,534 @@ export const Home = () => {
 
           {/* Product Cards */}
           <div className="row g-4">
-            {getTabProducts().map((product) => (
-              <div key={product.id} className="col-lg-4 col-md-6">
-                <ProductCard product={product} />
-              </div>
-            ))}
+            <AnimatePresence mode="wait">
+              {getTabProducts().map((product) => (
+                <motion.div 
+                  key={product.id} 
+                  className="col-lg-4 col-md-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
 
           <div className="text-center mt-5">
-            <Link to="/catalog" className="btn btn-flux-secondary px-5">View Full Catalog</Link>
+            <Link to="/catalog" className="btn btn-flux-secondary px-5 py-3 rounded-pill fw-bold">View Full Catalog</Link>
           </div>
         </div>
       </section>
 
-      {/* WHY CHOOSE FLUXRUN */}
-      <section className="py-5 bg-light" id="about">
-        <div className="container">
-          <div className="row align-items-center g-5">
-            {/* Left Graphics */}
-            <div className="col-lg-6">
-              <div className="position-relative p-5 d-flex justify-content-center align-items-center" style={{
-                background: 'radial-gradient(circle, rgba(11, 87, 255, 0.1) 0%, rgba(0,0,0,0) 70%)',
-                minHeight: '380px'
-              }}>
-                <div className="spin-slow position-absolute" style={{
-                  width: '280px',
-                  height: '280px',
-                  border: '2px dotted var(--flux-primary)',
-                  borderRadius: '50%',
-                  opacity: 0.15
-                }} />
-                
-                <motion.img 
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                  src="/green-shoe.png" 
-                  alt="Aesthetic Sole Render" 
-                  className="img-fluid position-relative rounded-4"
-                  style={{
-                    maxHeight: '260px',
-                    filter: 'drop-shadow(0 20px 30px rgba(0, 0, 0, 0.15))',
-                    transform: 'rotate(20deg)'
-                  }}
-                  onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800'; }}
+      <section 
+        ref={scrollContainerRef} 
+        className="position-relative w-100" 
+        style={{ 
+          minHeight: '380vh',
+          backgroundColor: '#08080a',
+          zIndex: 10
+        }}
+        id="about"
+      >
+        {/* Sticky viewport content container (sticks below fixed navbar) */}
+        <div 
+          style={{ 
+            position: 'sticky', 
+            top: windowWidth < 992 ? '70px' : '96px', 
+            height: windowWidth < 992 ? 'calc(100vh - 70px)' : 'calc(100vh - 96px)', 
+            overflow: 'hidden',
+            backgroundColor: '#0a090c'
+          }}
+          className="d-flex align-items-center justify-content-center w-100"
+        >
+          <div className={windowWidth < 992 ? "container-fluid px-0 h-100 py-3 d-flex flex-column justify-content-between position-relative w-100" : "w-100 h-100 position-relative"}>
+            
+            {/* Header Row */}
+            {windowWidth < 992 ? (
+              <div className="w-100 text-center pt-2 px-3" style={{ zIndex: 5 }}>
+                <span className="badge bg-primary-glow text-primary px-3 py-1 rounded-pill font-monospace mb-1.5" style={{ backgroundColor: 'rgba(0, 162, 255, 0.12)', fontSize: '0.65rem' }}>
+                  FLUXRUN LABS
+                </span>
+                <h2 className="text-white fw-bold font-display mb-0 tracking-tight" style={{ fontSize: '1.4rem' }}>
+                  ENGINEERED PERFORMANCE
+                </h2>
+              </div>
+            ) : (
+              <div 
+                className="position-absolute start-50 translate-middle-x text-center pt-4" 
+                style={{ 
+                  zIndex: 10, 
+                  top: '20px', 
+                  width: '90%', 
+                  maxWidth: '800px',
+                  pointerEvents: 'none'
+                }}
+              >
+                <span className="badge bg-primary-glow text-primary px-3 py-1.5 rounded-pill font-monospace mb-2" style={{ backgroundColor: 'rgba(0, 162, 255, 0.12)', fontSize: '0.75rem' }}>
+                  FLUXRUN LABS
+                </span>
+                <h2 className="text-white fw-extrabold font-display mb-1 tracking-tight" style={{ fontSize: '2.5rem', letterSpacing: '-0.5px' }}>
+                  ENGINEERED PERFORMANCE
+                </h2>
+                <p className="text-white-50 small mb-0" style={{ fontSize: '0.85rem' }}>
+                  Scroll to deconstruct the biomechanics of the ultimate sprint vector.
+                </p>
+              </div>
+            )}
+
+            {/* Main Interactive Canvas Wrapper (Full Width 16:9 box) */}
+            <div 
+              className={windowWidth < 992 ? "w-100 my-auto d-flex justify-content-center align-items-center" : "w-100 h-100 d-flex justify-content-center align-items-center position-relative"} 
+              style={windowWidth < 992 ? { minHeight: 0, backgroundColor: '#0a090c' } : { backgroundColor: '#0a090c' }}
+            >
+              {/* Perfect 16:9 Container that scales to fit without cropping */}
+              <div 
+                className="position-relative d-flex justify-content-center align-items-center overflow-hidden" 
+                style={windowWidth < 992 ? {
+                  width: '100%',
+                  height: 'auto',
+                  aspectRatio: '16/9',
+                  background: 'transparent',
+                  border: 'none',
+                  maxHeight: '40vh',
+                  zIndex: 2
+                } : {
+                  width: '100%',
+                  height: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  boxShadow: 'none',
+                  zIndex: 2
+                }}
+              >
+                {/* The actual Canvas */}
+                <canvas 
+                  ref={canvasRef} 
+                  width={1280} 
+                  height={720} 
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'cover'
+                  }} 
                 />
 
-                {/* Tech Highlights */}
-                <div className="glass-panel position-absolute bg-white px-3 py-2 text-dark shadow-sm d-flex align-items-center gap-2 border border-light" style={{ top: '10%', right: '10%' }}>
-                  <Zap size={14} className="text-warning" />
-                  <span className="small fw-semibold">Anti-Slip Lugs</span>
-                </div>
-                <div className="glass-panel position-absolute bg-white px-3 py-2 text-dark shadow-sm d-flex align-items-center gap-2 border border-light" style={{ bottom: '10%', left: '10%' }}>
-                  <Activity size={14} className="text-primary" />
-                  <span className="small fw-semibold">Plush Foam</span>
-                </div>
-              </div>
-            </div>
+                {/* Preloader Overlay */}
+                {!isImagesLoaded && (
+                  <div 
+                    className="position-absolute inset-0 d-flex flex-column justify-content-center align-items-center p-4 text-center"
+                    style={{ zIndex: 12, background: '#0a090c' }}
+                  >
+                    <div className="spinner-border text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <h6 className="font-monospace text-uppercase text-white mb-2" style={{ letterSpacing: '1px' }}>Decoding 3D Model...</h6>
+                    <div className="progress w-50" style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                      <div 
+                        className="progress-bar bg-primary" 
+                        role="progressbar" 
+                        style={{ width: `${loadingProgress}%` }} 
+                      />
+                    </div>
+                    <span className="small font-monospace text-white-50 mt-2" style={{ fontSize: '0.8rem' }}>{loadingProgress}%</span>
+                  </div>
+                )}
 
-            {/* Right Bullet Points */}
-            <div className="col-lg-6">
-              <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2" style={{ backgroundColor: 'var(--flux-primary-glow)' }}>BIOMECHANICS</span>
-              <h2 className="display-6 fw-bold font-display mb-4">ENGINEERED FOR SUPREME PERFORMANCE</h2>
-              <p className="text-muted mb-4">
-                Every line, seam, and pattern on a FluxRun shoe is mathematically positioned to optimize gait dynamics, reduce joint shock, and recycle landing impacts.
-              </p>
+                {/* SVG Pointer Lines Overlay */}
+                {isImagesLoaded && (
+                  <svg 
+                    className="position-absolute top-0 start-0 w-100 h-100" 
+                    style={{ pointerEvents: 'none', zIndex: 3 }}
+                    viewBox="0 0 100 100" 
+                    preserveAspectRatio="xMidYMid slice"
+                  >
+                    <AnimatePresence>
+                      {specData.map((spec, sIdx) => {
+                        const isActive = sIdx === activeSpecIndex;
+                        if (!isActive) return null;
+                        const marker = getScaledCoords(spec.marker);
+                        const labelPos = getScaledCoords(spec.labelPos);
+                        return (
+                          <g key={sIdx}>
+                            {/* Line connecting marker to label */}
+                            <motion.line 
+                              x1={`${marker.left}`} 
+                              y1={`${marker.top}`} 
+                              x2={`${labelPos.left}`} 
+                              y2={`${labelPos.top}`} 
+                              stroke={spec.color} 
+                              strokeWidth="0.3" 
+                              strokeDasharray="1.5 1.5"
+                              initial={{ pathLength: 0, opacity: 0 }}
+                              animate={{ pathLength: 1, opacity: 0.8 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.4 }}
+                            />
+                            {/* Inner connector points */}
+                            <circle 
+                              cx={`${marker.left}`} 
+                              cy={`${marker.top}`} 
+                              r="0.8" 
+                              fill={spec.color} 
+                            />
+                            <circle 
+                              cx={`${labelPos.left}`} 
+                              cy={`${labelPos.top}`} 
+                              r="0.6" 
+                              fill={spec.color} 
+                            />
+                          </g>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </svg>
+                )}
 
-              <div className="row g-4">
-                {benefits.map((b, idx) => (
-                  <div key={idx} className="col-sm-6">
-                    <div className="d-flex gap-3">
-                      <div className="text-primary mt-1">{b.icon}</div>
-                      <div>
-                        <h6 className="fw-bold mb-1">{b.title}</h6>
-                        <p className="small text-muted mb-0">{b.desc}</p>
+                {/* HTML Labels Positioning Overlay */}
+                {isImagesLoaded && specData.map((spec, sIdx) => {
+                  const isActive = sIdx === activeSpecIndex;
+                  const labelPos = getScaledCoords(spec.labelPos);
+                  return (
+                    <div
+                      key={`label-${sIdx}`}
+                      className="position-absolute"
+                      style={{
+                        top: `${labelPos.top}%`,
+                        left: `${labelPos.left}%`,
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 4,
+                        opacity: isActive ? 1 : 0,
+                        visibility: isActive ? 'visible' : 'hidden',
+                        transition: 'opacity 0.4s ease, transform 0.4s ease',
+                        pointerEvents: 'none'
+                      }}
+                    >
+                      <div 
+                        className="px-3 py-1.5 rounded font-monospace fw-bold text-uppercase border"
+                        style={{
+                          fontSize: 'min(11px, 2.2vw)',
+                          backgroundColor: 'rgba(10, 10, 12, 0.85)',
+                          color: '#ffffff',
+                          borderColor: `${spec.color}aa`,
+                          boxShadow: `0 0 15px ${spec.color}44`,
+                          letterSpacing: '0.5px',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        [ {spec.title} ]
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+
+                {/* Hotspot buttons on the shoe */}
+                {isImagesLoaded && specData.map((spec, sIdx) => {
+                  const isActive = sIdx === activeSpecIndex;
+                  const marker = getScaledCoords(spec.marker);
+                  return (
+                    <button
+                      key={`dot-${sIdx}`}
+                      onClick={() => scrollToLayer(sIdx)}
+                      className="position-absolute btn p-0 border-0 rounded-circle transition-all d-flex align-items-center justify-content-center"
+                      style={{
+                        top: `${marker.top}%`,
+                        left: `${marker.left}%`,
+                        transform: `translate(-50%, -50%) scale(${isActive ? 1.25 : 0.85})`,
+                        zIndex: 10,
+                        width: '32px',
+                        height: '32px',
+                        background: 'transparent',
+                        pointerEvents: 'auto',
+                        cursor: 'pointer'
+                      }}
+                      title={`Explore ${spec.title}`}
+                    >
+                      <span 
+                        className={`position-absolute rounded-circle ${isActive ? 'animate-ping' : ''}`} 
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          backgroundColor: spec.color,
+                          opacity: isActive ? 0.65 : 0,
+                          transition: 'all 0.3s'
+                        }} 
+                      />
+                      <span 
+                        className="rounded-circle" 
+                        style={{
+                          width: '12px',
+                          height: '12px',
+                          backgroundColor: spec.color,
+                          boxShadow: isActive ? `0 0 16px ${spec.color}, 0 0 6px ${spec.color}` : 'none',
+                          opacity: isActive ? 1 : 0.4,
+                          transition: 'all 0.3s'
+                        }} 
+                      />
+                    </button>
+                  );
+                })}
               </div>
             </div>
+
+            {/* Dashboard / Specs panel */}
+            {windowWidth < 992 ? (
+              <div className="w-100 pb-1 px-3" style={{ zIndex: 5 }}>
+                <div 
+                  className="w-100 p-3 rounded-4 text-white"
+                  style={{
+                    background: 'rgba(10, 10, 12, 0.75)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    border: `1px solid rgba(255, 255, 255, 0.08)`,
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+                    maxHeight: '42vh',
+                    overflowY: 'auto'
+                  }}
+                >
+                  <div className="d-flex align-items-center gap-2 mb-2">
+                    <span className="font-monospace text-uppercase px-2 py-0.5 rounded border" style={{ fontSize: '0.6rem', color: specData[activeSpecIndex]?.color, borderColor: `${specData[activeSpecIndex]?.color}55`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      LAYER 0{activeSpecIndex + 1}
+                    </span>
+                    <h5 className="fw-bold mb-0 text-white font-display text-uppercase" style={{ fontSize: '0.95rem' }}>
+                      {specData[activeSpecIndex]?.title}
+                    </h5>
+                  </div>
+                  
+                  <p className="text-white-50 mb-2.5 small" style={{ fontSize: '0.75rem', lineHeight: '1.4' }}>
+                    {specData[activeSpecIndex]?.desc}
+                  </p>
+
+                  <div className="mb-3">
+                    <div className="d-flex justify-content-between small font-monospace text-white-50 mb-1 text-uppercase" style={{ fontSize: '0.6rem' }}>
+                      <span>Analysis status</span>
+                      <span style={{ color: specData[activeSpecIndex]?.color }}>
+                        {Math.round(
+                          Math.max(
+                            0,
+                            Math.min(
+                              100,
+                              ((scrollPct / 100 - activeSpecIndex * 0.25) / 0.25) * 100
+                            )
+                          )
+                        )}%
+                      </span>
+                    </div>
+                    <div className="progress" style={{ height: '2px', backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                      <div 
+                        className="progress-bar"
+                        style={{
+                          backgroundColor: specData[activeSpecIndex]?.color,
+                          width: `${Math.max(
+                            0,
+                            Math.min(
+                              100,
+                              ((scrollPct / 100 - activeSpecIndex * 0.25) / 0.25) * 100
+                            )
+                          )}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="d-flex flex-wrap gap-1.5 mb-2.5">
+                    {specData[activeSpecIndex]?.highlights.map((highlight, hIdx) => (
+                      <span key={hIdx} className="badge text-white-50 font-monospace" style={{ fontSize: '0.6rem', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                        ✓ {highlight}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="d-flex justify-content-between align-items-center border-top border-secondary pt-2">
+                    <div className="d-flex gap-2">
+                      {specData.map((spec, sIdx) => (
+                        <button
+                          key={sIdx}
+                          onClick={() => scrollToLayer(sIdx)}
+                          className="btn p-0 rounded-circle transition-all"
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            backgroundColor: activeSpecIndex === sIdx ? spec.color : 'rgba(255, 255, 255, 0.15)'
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <span className="font-monospace text-white-50" style={{ fontSize: '0.6rem' }}>SCROLL MOUSE</span>
+                  </div>
+
+                </div>
+              </div>
+            ) : null}
+
           </div>
         </div>
       </section>
 
-      {/* TECH TIMELINE */}
-      <section className="py-5 bg-dark text-white">
+      {/* REDESIGNED TIMELINE WITH SCROLL ANIMATIONS & ALTERNATING LAYOUT */}
+      <section className="py-5 text-white position-relative" style={{ backgroundColor: '#08080a' }}>
         <div className="container">
           <div className="text-center mb-5">
-            <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2" style={{ backgroundColor: 'rgba(11,87,255,0.2)' }}>TIMELINE</span>
+            <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2" style={{ backgroundColor: 'rgba(0,107,255,0.2)' }}>TIMELINE</span>
             <h2 className="display-6 fw-bold text-white font-display">MILESTONES OF INNOVATION</h2>
-            <p className="text-white-50">Tracing our commitment to performance over the years</p>
+            <p className="text-white-50">Tracing our commitment to performance over the years with alternating timeline breakthrough nodes</p>
           </div>
 
-          <div className="row justify-content-center">
-            <div className="col-lg-8">
-              <div className="timeline-container">
-                {timelineEvents.map((event, idx) => (
-                  <div key={idx} className="timeline-item">
-                    <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start mb-2">
-                      <h4 className="fw-bold text-white font-display mb-0">{event.title}</h4>
-                      <span className="badge bg-primary font-monospace px-3 py-1 rounded-pill mt-1 mt-sm-0">{event.year}</span>
-                    </div>
-                    <p className="text-white-50 mb-0 small">{event.desc}</p>
+          {/* Desktop Alternating Timeline */}
+          <div className="d-none d-md-block position-relative py-5">
+            {/* Center Glowing Progress Track */}
+            <div style={{
+              position: 'absolute',
+              left: '50%',
+              top: 0,
+              bottom: 0,
+              width: '4px',
+              transform: 'translateX(-50%)',
+              background: 'linear-gradient(to bottom, var(--flux-primary) 0%, var(--flux-accent) 100%)',
+              boxShadow: '0 0 15px rgba(0, 162, 255, 0.3)',
+              zIndex: 0
+            }} />
+
+            {timelineEvents.map((event, idx) => {
+              const isEven = idx % 2 === 0;
+              return (
+                <div key={idx} className="row g-0 align-items-center mb-5 position-relative" style={{ zIndex: 1 }}>
+                  {/* Left Column (shows even events) */}
+                  <div className={`col-md-5 ${isEven ? 'text-end order-1' : 'order-3 order-md-1 d-none d-md-block'}`}>
+                    {isEven && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+                        className="glass-panel p-4 text-start d-inline-block shadow-sm"
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: '24px',
+                          maxWidth: '450px'
+                        }}
+                        whileHover={{ scale: 1.03, borderColor: 'var(--flux-accent)', boxShadow: '0 0 20px rgba(0, 229, 255, 0.15)' }}
+                      >
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <span className="badge bg-primary px-3 py-1.5 font-monospace rounded-pill">{event.year}</span>
+                          <h4 className="fw-bold text-white font-display mb-0 small text-uppercase tracking-wider ms-3">{event.title}</h4>
+                        </div>
+                        <p className="text-white-50 mb-0 small" style={{ lineHeight: '1.6' }}>{event.desc}</p>
+                      </motion.div>
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
+
+                  {/* Center Badge Dot Column */}
+                  <div className="col-md-2 d-flex justify-content-center order-2 position-relative" style={{ minHeight: '60px' }}>
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      whileInView={{ scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ type: 'spring', damping: 15, stiffness: 150, delay: 0.1 }}
+                      className="d-flex align-items-center justify-content-center"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        backgroundColor: '#111111',
+                        border: '4px solid var(--flux-primary)',
+                        boxShadow: '0 0 15px var(--flux-primary)',
+                        zIndex: 2,
+                        cursor: 'pointer'
+                      }}
+                      whileHover={{ scale: 1.3, borderColor: 'var(--flux-accent)', boxShadow: '0 0 20px var(--flux-accent)' }}
+                    >
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--flux-accent)' }} />
+                    </motion.div>
+                  </div>
+
+                  {/* Right Column (shows odd events) */}
+                  <div className={`col-md-5 ${!isEven ? 'text-start order-3' : 'order-1 order-md-3 d-none d-md-block'}`}>
+                    {!isEven && (
+                      <motion.div
+                        initial={{ opacity: 0, x: 50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+                        className="glass-panel p-4 text-start d-inline-block shadow-sm"
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: '24px',
+                          maxWidth: '450px'
+                        }}
+                        whileHover={{ scale: 1.03, borderColor: 'var(--flux-accent)', boxShadow: '0 0 20px rgba(0, 229, 255, 0.15)' }}
+                      >
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <h4 className="fw-bold text-white font-display mb-0 small text-uppercase tracking-wider me-3">{event.title}</h4>
+                          <span className="badge bg-primary px-3 py-1.5 font-monospace rounded-pill">{event.year}</span>
+                        </div>
+                        <p className="text-white-50 mb-0 small" style={{ lineHeight: '1.6' }}>{event.desc}</p>
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Mobile Stacked Timeline */}
+          <div className="d-block d-md-none position-relative py-4 ps-4 ms-2">
+            <div style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: '3px',
+              background: 'linear-gradient(to bottom, var(--flux-primary) 0%, var(--flux-accent) 100%)',
+              boxShadow: '0 0 10px rgba(0, 162, 255, 0.3)'
+            }} />
+            
+            {timelineEvents.map((event, idx) => (
+              <motion.div 
+                key={idx}
+                className="position-relative mb-4 pb-2"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: idx * 0.1 }}
+              >
+                {/* Node */}
+                <div style={{
+                  position: 'absolute',
+                  left: '-26px',
+                  top: '6px',
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '50%',
+                  backgroundColor: '#111111',
+                  border: '3px solid var(--flux-primary)',
+                  boxShadow: '0 0 8px var(--flux-primary)',
+                  zIndex: 2
+                }} />
+                
+                <div className="glass-panel p-4 text-start shadow-sm" style={{
+                  backgroundColor: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '20px'
+                }}>
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <h5 className="fw-bold text-white font-display mb-0 small text-uppercase">{event.title}</h5>
+                    <span className="badge bg-primary px-2.5 py-1 font-monospace rounded-pill" style={{ fontSize: '11px' }}>{event.year}</span>
+                  </div>
+                  <p className="text-white-50 mb-0 small" style={{ fontSize: '12px' }}>{event.desc}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* TESTIMONIALS SLIDER SECTION (3-Box Sliding Carousel) */}
-      <section className="py-5 bg-white border-top border-bottom border-light position-relative" style={{ overflow: 'hidden' }}>
+      <section className="py-5 bg-white border-bottom border-light position-relative" style={{ overflow: 'hidden' }}>
         {/* Floating background glow lights */}
         <div 
           className="float-glow-left position-absolute" 
@@ -565,7 +1553,7 @@ export const Home = () => {
             width: '350px',
             height: '350px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(11, 87, 255, 0.08) 0%, rgba(0, 0, 0, 0) 70%)',
+            background: 'radial-gradient(circle, rgba(0, 162, 255, 0.08) 0%, rgba(0, 0, 0, 0) 70%)',
             filter: 'blur(45px)',
             top: '5%',
             left: '-10%',
@@ -590,7 +1578,7 @@ export const Home = () => {
 
         <div className="container position-relative" style={{ zIndex: 1 }}>
           <div className="text-center mb-5">
-            <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2" style={{ backgroundColor: 'var(--flux-primary-glow)' }}>TESTIMONIALS</span>
+            <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2">TESTIMONIALS</span>
             <h2 className="display-5 fw-bold font-display">ATHLETE TRUST</h2>
             <p className="text-muted">Proven on tracks, trails, and urban pavements around the globe</p>
           </div>
@@ -600,7 +1588,7 @@ export const Home = () => {
             <button 
               onClick={prevTesti}
               className="btn btn-light rounded-circle shadow-sm border d-flex align-items-center justify-content-center p-2 position-absolute"
-              style={{ left: '-15px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: '44px', height: '44px', backgroundColor: 'rgba(255,255,255,0.9)' }}
+              style={{ left: '-15px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: '46px', height: '46px', backgroundColor: 'rgba(255,255,255,0.9)' }}
               disabled={maxIndex <= 0}
             >
               <ChevronLeft size={20} />
@@ -610,7 +1598,7 @@ export const Home = () => {
             <button 
               onClick={nextTesti}
               className="btn btn-light rounded-circle shadow-sm border d-flex align-items-center justify-content-center p-2 position-absolute"
-              style={{ right: '-15px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: '44px', height: '44px', backgroundColor: 'rgba(255,255,255,0.9)' }}
+              style={{ right: '-15px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: '46px', height: '46px', backgroundColor: 'rgba(255,255,255,0.9)' }}
               disabled={maxIndex <= 0}
             >
               <ChevronRight size={20} />
@@ -691,7 +1679,7 @@ export const Home = () => {
                                 borderRadius: '50%', 
                                 objectFit: 'cover', 
                                 border: '2px solid var(--flux-primary)',
-                                boxShadow: '0 0 8px rgba(11, 87, 255, 0.12)'
+                                boxShadow: '0 0 8px rgba(0, 162, 255, 0.12)'
                               }} 
                             />
                           </div>
@@ -718,7 +1706,7 @@ export const Home = () => {
                     width: '10px',
                     height: '10px',
                     backgroundColor: testiIndex === idx ? 'var(--flux-primary)' : 'rgba(0,0,0,0.15)',
-                    transform: testiIndex === idx ? 'scale(1.25)' : 'scale(1)',
+                    transform: testiIndex === idx ? 'scale(1.3)' : 'scale(1)',
                     transition: 'all 0.3s ease'
                   }}
                 />
@@ -742,7 +1730,7 @@ export const Home = () => {
           <motion.div 
             whileHover={{ scale: 1.1 }}
             className="btn btn-primary rounded-circle p-4 d-inline-flex align-items-center justify-content-center mb-4 shadow-lg cursor-pointer"
-            style={{ width: '80px', height: '80px', backgroundColor: 'var(--flux-primary)' }}
+            style={{ width: '80px', height: '80px', backgroundColor: 'var(--flux-primary)', boxShadow: '0 0 25px rgba(0, 162, 255, 0.4)' }}
             onClick={() => setIsVideoOpen(true)}
           >
             <Play size={32} fill="#ffffff" className="ms-1" />
@@ -798,11 +1786,11 @@ export const Home = () => {
         )}
       </AnimatePresence>
 
-      {/* INSTAGRAM GALLERY */}
+      {/* INSTAGRAM GALLERY WITH HOVER OVERLAYS */}
       <section className="py-5">
         <div className="container">
           <div className="text-center mb-5">
-            <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2" style={{ backgroundColor: 'var(--flux-primary-glow)' }}>SOCIAL GRID</span>
+            <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2">SOCIAL GRID</span>
             <h2 className="display-6 fw-bold font-display">SHARED VIA #FLUXRUN</h2>
             <p className="text-muted">See how the community styles and pushes limits worldwide</p>
           </div>
@@ -818,11 +1806,23 @@ export const Home = () => {
             ].map((img, idx) => (
               <div key={idx} className="col-lg-2 col-md-4 col-6">
                 <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  className="rounded-4 overflow-hidden shadow-sm"
-                  style={{ height: '180px' }}
+                  whileHover={{ 
+                    scale: 1.05,
+                    boxShadow: '0 10px 20px rgba(0, 162, 255, 0.1)'
+                  }}
+                  className="rounded-4 overflow-hidden shadow-sm position-relative cursor-pointer"
+                  style={{ height: '180px', border: '1px solid rgba(0, 0, 0, 0.05)' }}
                 >
                   <img src={img} alt="Instagram Showcase" className="w-100 h-100 object-fit-cover" />
+                  
+                  {/* Subtle hover blur gradient overlay */}
+                  <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundColor: 'rgba(0, 162, 255, 0.15)',
+                    opacity: 0,
+                    transition: 'opacity 0.3s'
+                  }} className="insta-hover-overlay" />
                 </motion.div>
               </div>
             ))}

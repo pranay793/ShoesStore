@@ -93,14 +93,14 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
 
             <div className="row g-0">
               {/* Product Visual */}
-              <div className="col-md-6 bg-light d-flex align-items-center justify-content-center p-5 position-relative" style={{ minHeight: '350px', background: 'radial-gradient(circle, rgba(11, 87, 255, 0.08) 0%, rgba(248, 249, 252, 1) 100%)' }}>
+              <div className="col-md-6 bg-light d-flex align-items-center justify-content-center p-5 position-relative" style={{ minHeight: '350px', background: 'radial-gradient(circle, rgba(0, 162, 255, 0.08) 0%, rgba(248, 249, 252, 1) 100%)' }}>
                 {/* Glowing radial background */}
                 <div style={{
                   position: 'absolute',
                   width: '200px',
                   height: '200px',
                   borderRadius: '50%',
-                  background: 'rgba(11, 87, 255, 0.15)',
+                  background: 'rgba(0, 162, 255, 0.15)',
                   filter: 'blur(30px)',
                   zIndex: 0
                 }} />
