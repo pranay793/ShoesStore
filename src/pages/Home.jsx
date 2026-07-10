@@ -752,12 +752,12 @@ export const Home = () => {
                     initial="hidden"
                     animate="visible"
                     exit="exit"
-                    className={windowWidth < 768 ? "p-4 rounded-4" : ""}
+                    className={windowWidth < 768 ? "p-0" : ""}
                     style={windowWidth < 768 ? {
-                      backgroundColor: 'rgba(10, 10, 12, 0.55)',
-                      backdropFilter: 'blur(8px)',
-                      WebkitBackdropFilter: 'blur(8px)',
-                      border: '1px solid rgba(255, 255, 255, 0.06)'
+                      backgroundColor: 'transparent',
+                      backdropFilter: 'none',
+                      WebkitBackdropFilter: 'none',
+                      border: 'none'
                     } : {}}
                   >
                     <motion.h2 
@@ -1061,11 +1061,11 @@ export const Home = () => {
           }}
           className="d-flex align-items-center justify-content-center w-100"
         >
-          <div className={windowWidth < 992 ? "container-fluid px-0 h-100 py-3 d-flex flex-column justify-content-between position-relative w-100" : "w-100 h-100 position-relative"}>
+          <div className="w-100 h-100 position-relative">
             
             {/* Header Row */}
             {windowWidth < 992 ? (
-              <div className="w-100 text-center pt-2 px-3" style={{ zIndex: 5 }}>
+              <div className="position-absolute start-50 translate-middle-x w-100 text-center pt-3 px-3" style={{ zIndex: 10, top: '10px', pointerEvents: 'none' }}>
                 <span className="badge bg-primary-glow text-primary px-3 py-1 rounded-pill font-monospace mb-1.5" style={{ backgroundColor: 'rgba(0, 162, 255, 0.12)', fontSize: '0.65rem' }}>
                   FLUXRUN LABS
                 </span>
@@ -1098,19 +1098,17 @@ export const Home = () => {
 
             {/* Main Interactive Canvas Wrapper (Full Width 16:9 box) */}
             <div 
-              className={windowWidth < 992 ? "w-100 my-auto d-flex justify-content-center align-items-center" : "w-100 h-100 d-flex justify-content-center align-items-center position-relative"} 
-              style={windowWidth < 992 ? { minHeight: 0, backgroundColor: '#0a090c' } : { backgroundColor: '#0a090c' }}
+              className="w-100 h-100 d-flex justify-content-center align-items-center position-relative" 
+              style={{ backgroundColor: '#0a090c' }}
             >
               {/* Perfect 16:9 Container that scales to fit without cropping */}
               <div 
                 className="position-relative d-flex justify-content-center align-items-center overflow-hidden" 
                 style={windowWidth < 992 ? {
-                  width: '100%',
-                  height: 'auto',
-                  aspectRatio: '16/9',
+                  height: '100%',
+                  width: 'calc((100vh - 70px) * 16 / 9)',
                   background: 'transparent',
                   border: 'none',
-                  maxHeight: '40vh',
                   zIndex: 2
                 } : {
                   width: '100%',
@@ -1167,7 +1165,9 @@ export const Home = () => {
                         const isActive = sIdx === activeSpecIndex;
                         if (!isActive) return null;
                         const marker = getScaledCoords(spec.marker);
-                        const labelPos = getScaledCoords(spec.labelPos);
+                        const labelPos = windowWidth < 992 
+                          ? { top: 82, left: 50 } 
+                          : getScaledCoords(spec.labelPos);
                         return (
                           <g key={sIdx}>
                             {/* Line connecting marker to label */}
@@ -1207,7 +1207,9 @@ export const Home = () => {
                 {/* HTML Labels Positioning Overlay */}
                 {isImagesLoaded && specData.map((spec, sIdx) => {
                   const isActive = sIdx === activeSpecIndex;
-                  const labelPos = getScaledCoords(spec.labelPos);
+                  const labelPos = windowWidth < 992 
+                    ? { top: 82, left: 50 } 
+                    : getScaledCoords(spec.labelPos);
                   return (
                     <div
                       key={`label-${sIdx}`}
@@ -1226,7 +1228,7 @@ export const Home = () => {
                       <div 
                         className="px-3 py-1.5 rounded font-monospace fw-bold text-uppercase border"
                         style={{
-                          fontSize: 'min(11px, 2.2vw)',
+                          fontSize: windowWidth < 768 ? '12px' : 'min(11px, 2.2vw)',
                           backgroundColor: 'rgba(10, 10, 12, 0.85)',
                           color: '#ffffff',
                           borderColor: `${spec.color}aa`,
@@ -1289,96 +1291,6 @@ export const Home = () => {
                 })}
               </div>
             </div>
-
-            {/* Dashboard / Specs panel */}
-            {windowWidth < 992 ? (
-              <div className="w-100 pb-1 px-3" style={{ zIndex: 5 }}>
-                <div 
-                  className="w-100 p-3 rounded-4 text-white"
-                  style={{
-                    background: 'rgba(10, 10, 12, 0.75)',
-                    backdropFilter: 'blur(16px)',
-                    WebkitBackdropFilter: 'blur(16px)',
-                    border: `1px solid rgba(255, 255, 255, 0.08)`,
-                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
-                    maxHeight: '42vh',
-                    overflowY: 'auto'
-                  }}
-                >
-                  <div className="d-flex align-items-center gap-2 mb-2">
-                    <span className="font-monospace text-uppercase px-2 py-0.5 rounded border" style={{ fontSize: '0.6rem', color: specData[activeSpecIndex]?.color, borderColor: `${specData[activeSpecIndex]?.color}55`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      LAYER 0{activeSpecIndex + 1}
-                    </span>
-                    <h5 className="fw-bold mb-0 text-white font-display text-uppercase" style={{ fontSize: '0.95rem' }}>
-                      {specData[activeSpecIndex]?.title}
-                    </h5>
-                  </div>
-                  
-                  <p className="text-white-50 mb-2.5 small" style={{ fontSize: '0.75rem', lineHeight: '1.4' }}>
-                    {specData[activeSpecIndex]?.desc}
-                  </p>
-
-                  <div className="mb-3">
-                    <div className="d-flex justify-content-between small font-monospace text-white-50 mb-1 text-uppercase" style={{ fontSize: '0.6rem' }}>
-                      <span>Analysis status</span>
-                      <span style={{ color: specData[activeSpecIndex]?.color }}>
-                        {Math.round(
-                          Math.max(
-                            0,
-                            Math.min(
-                              100,
-                              ((scrollPct / 100 - activeSpecIndex * 0.25) / 0.25) * 100
-                            )
-                          )
-                        )}%
-                      </span>
-                    </div>
-                    <div className="progress" style={{ height: '2px', backgroundColor: 'rgba(255,255,255,0.06)' }}>
-                      <div 
-                        className="progress-bar"
-                        style={{
-                          backgroundColor: specData[activeSpecIndex]?.color,
-                          width: `${Math.max(
-                            0,
-                            Math.min(
-                              100,
-                              ((scrollPct / 100 - activeSpecIndex * 0.25) / 0.25) * 100
-                            )
-                          )}%`
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="d-flex flex-wrap gap-1.5 mb-2.5">
-                    {specData[activeSpecIndex]?.highlights.map((highlight, hIdx) => (
-                      <span key={hIdx} className="badge text-white-50 font-monospace" style={{ fontSize: '0.6rem', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                        ✓ {highlight}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="d-flex justify-content-between align-items-center border-top border-secondary pt-2">
-                    <div className="d-flex gap-2">
-                      {specData.map((spec, sIdx) => (
-                        <button
-                          key={sIdx}
-                          onClick={() => scrollToLayer(sIdx)}
-                          className="btn p-0 rounded-circle transition-all"
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            backgroundColor: activeSpecIndex === sIdx ? spec.color : 'rgba(255, 255, 255, 0.15)'
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <span className="font-monospace text-white-50" style={{ fontSize: '0.6rem' }}>SCROLL MOUSE</span>
-                  </div>
-
-                </div>
-              </div>
-            ) : null}
 
           </div>
         </div>
