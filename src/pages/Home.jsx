@@ -663,17 +663,6 @@ export const Home = () => {
             />
           </motion.div>
 
-          {/* Cinematic Gradient Overlay for text readability */}
-          <div 
-            className="position-absolute inset-0 w-100 h-100" 
-            style={{ 
-              zIndex: 2, 
-              background: windowWidth < 992 
-                ? 'linear-gradient(to bottom, rgba(10,10,12,0.85) 0%, rgba(10,10,12,0.5) 50%, rgba(10,10,12,0.9) 100%)'
-                : 'linear-gradient(to right, rgba(10,10,12,0.85) 0%, rgba(10,10,12,0.4) 50%, rgba(10,10,12,0.1) 100%)',
-              pointerEvents: 'none'
-            }}
-          />
 
           {/* Huge Backdrop Brand Slogan */}
           <div style={{
