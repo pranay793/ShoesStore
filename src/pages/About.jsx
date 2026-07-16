@@ -38,7 +38,7 @@ export const About = () => {
         </div>
 
         {/* Content Image Grid */}
-        <div className="row g-5 align-items-center mt-4">
+        <div className="row gx-4 gx-md-5 gy-5 align-items-center mt-4">
           <div className="col-12 col-lg-6">
             <motion.div
               initial={{ opacity: 0, x: -30 }}

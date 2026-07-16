@@ -100,7 +100,7 @@ export const ProductDetails = () => {
       </div>
 
       <div className="container py-4 pb-5">
-        <div className="row g-5">
+        <div className="row gx-4 gx-md-5 gy-5">
           
           {/* GALLERY COLUMN (Left) */}
           <div className="col-lg-6">

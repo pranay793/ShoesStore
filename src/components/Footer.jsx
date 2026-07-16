@@ -24,7 +24,7 @@ export const Footer = () => {
     }}>
       {/* Brand Trust Badges */}
       <div className="container border-bottom border-secondary pb-5 mb-5">
-        <div className="row g-4 text-center text-md-start">
+        <div className="row gx-4 gy-4 text-center text-md-start">
           <div className="col-md-3 d-flex flex-column flex-md-row align-items-center gap-3">
             <div className="bg-white-10 p-3 rounded-circle text-primary" style={{ backgroundColor: 'rgba(255, 255, 255, 0.04)' }}>
               <Truck size={24} />
@@ -65,7 +65,7 @@ export const Footer = () => {
       </div>
 
       <div className="container">
-        <div className="row g-5">
+        <div className="row gx-4 gx-md-5 gy-5">
           {/* Brand Info Column */}
           <div className="col-lg-4 col-md-6">
             <div className="d-flex align-items-center mb-3">

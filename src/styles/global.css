@@ -1,11 +1,15 @@
 /* Global Custom Styles for FluxRun */
 @import "./variables.css";
 
+html, body, #root {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
 body {
   font-family: var(--font-secondary);
   color: var(--flux-text);
   background-color: var(--flux-background);
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 

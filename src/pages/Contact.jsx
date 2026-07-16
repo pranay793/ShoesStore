@@ -51,7 +51,7 @@ export const Contact = () => {
           </motion.p>
         </div>
 
-        <div className="row g-5 mt-2 justify-content-center">
+        <div className="row gx-4 gx-md-5 gy-5 mt-2 justify-content-center">
 
           {/* Info Column */}
           <div className="col-12 col-lg-5">

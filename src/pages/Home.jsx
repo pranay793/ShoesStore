@@ -1,16 +1,231 @@
-import React, { useContext, useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence, useScroll, useMotionValueEvent, useSpring } from 'framer-motion';
-import { ShopContext } from '../context/ShopContext';
-import { ProductCard } from '../components/ProductCard';
+import { motion, AnimatePresence, useScroll, useMotionValueEvent, useSpring, useTransform } from 'framer-motion';
+import { TrendingSection } from '../components/TrendingSection';
+import modelImg from '../../images/model.png';
 import { 
-  ArrowRight, ShieldCheck, RefreshCw, Truck, Zap, Activity, Award, Star, 
-  ChevronLeft, ChevronRight, Play, Quote, X, Layers, Wind, Sparkles, ArrowUpRight
+  Zap, Activity, Star, 
+  ChevronLeft, ChevronRight, Play, Quote, X, Layers, Wind, ArrowUpRight
 } from 'lucide-react';
 
+// 3D Motion scroll-entrance wrapper
+const Section3D = ({ children }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 60, rotateX: 8, scale: 0.96 }}
+      whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-120px" }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      style={{ transformStyle: 'preserve-3d', perspective: '1200px' }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+// Nature Parallax Section with Scroll-Driven Runner Controlled by Mouse Scroll
+const NatureRunnerSection = () => {
+  const containerRef = useRef(null);
+  
+  // Track scroll progress within this specific section
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
+
+  // Smooth scroll progress using spring physics
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 80,
+    damping: 25,
+    restDelta: 0.001
+  });
+
+  // Map scroll progress to frame sequence index
+  const [frameIndex, setFrameIndex] = useState(1);
+  
+  useMotionValueEvent(smoothProgress, "change", (latest) => {
+    const totalFrames = 240;
+    // Map scroll progress (0 to 1) 1:1 to frame range (1 to 240)
+    const index = Math.max(1, Math.min(totalFrames, Math.floor(latest * totalFrames) + 1));
+    setFrameIndex(index);
+  });
+
+  const pad = (num) => String(num).padStart(3, '0');
+  const runnerSrc = `/second-section/ezgif-frame-${pad(frameIndex)}.png`;
+
+  // 3D Parallax Mouse Control Setup
+  const mouseX = useSpring(0, { stiffness: 60, damping: 20 });
+  const mouseY = useSpring(0, { stiffness: 60, damping: 20 });
+
+  const handleMouseMove = (e) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    // Normalized coordinates from -0.5 to 0.5
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
+
+  // Convert normalized mouse coordinates to 3D rotation angles & translations
+  const rotateX = useTransform(mouseY, [-0.5, 0.5], [8, -8]);
+  const rotateY = useTransform(mouseX, [-0.5, 0.5], [-8, 8]);
+  const shiftX = useTransform(mouseX, [-0.5, 0.5], [-15, 15]);
+  const shiftY = useTransform(mouseY, [-0.5, 0.5], [-15, 15]);
+
+  // Features list appearing at specific scroll checkpoints
+  const features = [
+    { title: "Eco-Weave Fibers", desc: "100% recycled ocean plastics knitted for high durability.", x: "15%", y: "25%", activeStart: 0.15, activeEnd: 0.4 },
+    { title: "Nature Calibrated", desc: "Biomechanically tuned shock absorption for outdoor trails.", x: "65%", y: "30%", activeStart: 0.4, activeEnd: 0.65 },
+    { title: "All-Terrain Traction", desc: "Deep Vibram rubber lugs engineered for mud, rock, and wet grass.", x: "20%", y: "65%", activeStart: 0.65, activeEnd: 0.9 }
+  ];
+
+  return (
+    <section 
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="position-relative w-100"
+      style={{
+        height: '450vh',
+        backgroundColor: '#050c06', // Nature theme background
+        overflow: 'visible',
+        zIndex: 5
+      }}
+    >
+      <div 
+        style={{
+          position: 'sticky',
+          top: '0px',
+          height: '100vh',
+          width: '100%',
+          overflow: 'hidden',
+          backgroundColor: '#050c06',
+          perspective: 1200 // Enable 3D space
+        }}
+      >
+        <motion.div
+          style={{
+            width: '100%',
+            height: '100%',
+            rotateX: rotateX,
+            rotateY: rotateY,
+            x: shiftX,
+            y: shiftY,
+            scale: 1.04, // Slightly scale up to avoid showing container background on rotation
+            transformStyle: 'preserve-3d',
+            position: 'absolute',
+            inset: 0
+          }}
+        >
+          {/* Redesigned fullscreen frame-by-frame background image layer */}
+          <img 
+            src={runnerSrc} 
+            alt="Born in Nature Scene" 
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              zIndex: 1,
+              transform: 'translateZ(0px)'
+            }}
+          />
+
+          {/* Ambient Dark Forest mask overlay */}
+          <div 
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'linear-gradient(to bottom, rgba(5,12,6,0.2) 0%, rgba(5,12,6,0.6) 100%)',
+              zIndex: 2,
+              pointerEvents: 'none',
+              transform: 'translateZ(10px)'
+            }}
+          />
+
+          {/* Flying wind particles */}
+          <div 
+            className="position-absolute inset-0"
+            style={{ zIndex: 8, pointerEvents: 'none', transform: 'translateZ(20px)' }}
+          >
+            {[...Array(12)].map((_, i) => {
+              const speed = 2 + (i % 3) * 1.5;
+              const startDelay = i * 0.4;
+              return (
+                <div 
+                  key={i}
+                  className="position-absolute"
+                  style={{
+                    top: `${15 + i * 7}%`,
+                    right: `-100px`,
+                    width: `${30 + (i % 4) * 20}px`,
+                    height: '2px',
+                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)',
+                    animation: `windBlow ${speed}s infinite linear`,
+                    animationDelay: `${startDelay}s`
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {/* Feature cards appearing sequentially with 3D pop */}
+          {features.map((feat, idx) => {
+            const cardOpacity = useTransform(smoothProgress, [feat.activeStart, feat.activeStart + 0.05, feat.activeEnd - 0.05, feat.activeEnd], [0, 1, 1, 0]);
+            const cardScale = useTransform(smoothProgress, [feat.activeStart, feat.activeStart + 0.05, feat.activeEnd - 0.05, feat.activeEnd], [0.9, 1, 1, 0.9]);
+            const cardYOffset = useTransform(smoothProgress, [feat.activeStart, feat.activeStart + 0.05, feat.activeEnd - 0.05, feat.activeEnd], ["20px", "0px", "0px", "-20px"]);
+
+            return (
+              <motion.div
+                key={idx}
+                className="position-absolute p-4 glass-panel text-white"
+                style={{
+                  top: feat.y,
+                  left: feat.x,
+                  opacity: cardOpacity,
+                  scale: cardScale,
+                  translateY: cardYOffset,
+                  width: '320px',
+                  zIndex: 10,
+                  borderRadius: '24px',
+                  background: 'rgba(8, 18, 10, 0.85)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(0, 229, 255, 0.35)',
+                  boxShadow: '0 15px 30px rgba(0,0,0,0.5), 0 0 15px rgba(0, 229, 255, 0.2) inset',
+                  transform: 'translateZ(90px)' // Visual 3D depth pop!
+                }}
+              >
+                <span className="badge bg-primary px-3 py-1 mb-2 font-monospace" style={{ fontSize: '0.65rem', backgroundColor: 'var(--flux-primary)' }}>FEATURE 0{idx + 1}</span>
+                <h4 className="fw-bold mb-2 font-display text-uppercase text-white" style={{ letterSpacing: '0.5px', color: '#ffffff' }}>{feat.title}</h4>
+                <p className="small mb-0" style={{ lineHeight: '1.5', color: 'rgba(255, 255, 255, 0.8)' }}>{feat.desc}</p>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      </div>
+      
+      <style>{`
+        @keyframes windBlow {
+          0% { transform: translateX(0); opacity: 0; }
+          10% { opacity: 0.6; }
+          90% { opacity: 0.6; }
+          100% { transform: translateX(-120vw); opacity: 0; }
+        }
+      `}</style>
+    </section>
+  );
+};
+
 export const Home = () => {
-  const { products } = useContext(ShopContext);
-  const [activeTab, setActiveTab] = useState('new'); // new, top, limited
   const [isVideoOpen, setIsVideoOpen] = useState(false);
 
   // Handle window width for responsive layout
@@ -186,34 +401,22 @@ export const Home = () => {
   const translateX = testiIndex * (cardWidth + gap);
 
   const nextTesti = () => {
-    setTestiIndex((prev) => (prev + 1) % (maxIndex + 1));
+    setTestiIndex((prev) => (prev + 1) % testimonials.length);
   };
 
   const prevTesti = () => {
-    setTestiIndex((prev) => (prev - 1 + maxIndex + 1) % (maxIndex + 1));
+    setTestiIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
 
   // Auto slide testimonials
   useEffect(() => {
-    if (maxIndex <= 0) return;
     const timer = setInterval(() => {
-      setTestiIndex((prev) => (prev + 1) % (maxIndex + 1));
+      setTestiIndex((prev) => (prev + 1) % testimonials.length);
     }, 8000);
     return () => clearInterval(timer);
-  }, [maxIndex]);
+  }, [testimonials.length]);
 
-  // Filter products for tabs
-  const getTabProducts = () => {
-    switch (activeTab) {
-      case 'top':
-        return products.filter(p => p.rating >= 4.8).slice(0, 3);
-      case 'limited':
-        return products.filter(p => p.stock <= 10).slice(0, 3);
-      case 'new':
-      default:
-        return products.slice(0, 3);
-    }
-  };
+
 
   // --- 3D HERO BANNER SCROLL ANIMATION STATES & HOOKS ---
   const heroScrollContainerRef = useRef(null);
@@ -616,7 +819,7 @@ export const Home = () => {
         ref={heroScrollContainerRef}
         className="position-relative w-100" 
         style={{
-          minHeight: '320vh',
+          minHeight: '200vh',
           backgroundColor: '#0a090c',
           zIndex: 10
         }}
@@ -726,7 +929,7 @@ export const Home = () => {
             className="container-fluid px-4 px-md-5 position-relative h-100 d-flex align-items-center" 
             style={{ 
               zIndex: 5,
-              paddingTop: windowWidth < 992 ? '100px' : '130px',
+              paddingTop: windowWidth < 992 ? '110px' : '170px',
               paddingBottom: '50px'
             }}
           >
@@ -845,195 +1048,96 @@ export const Home = () => {
       </section>
 
       {/* TRUST BAR (MARQUEE WITH BRAND INTERACTIVITY) */}
-      <section className="py-4 border-top border-bottom border-light" style={{ backgroundColor: '#ffffff', zIndex: 5, position: 'relative' }}>
-        <div className="container-fluid px-0">
-          <div className="marquee-container">
-            <div className="marquee-content" style={{ gap: '8rem' }}>
-              {[
-                { name: "NIKE", color: "#FF5A00", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M21 6.5c-2.3 1.8-6.9 5-10.4 7.6-1.5 1.1-2.9 2-3.8 2.5-.9.4-1.4.5-1.7.5-.2 0-.3-.1-.3-.2 0-.2.2-.7.8-1.5.8-1 2.3-2.9 4.3-5.3.6-.7.5-1.2-.2-1-.7.2-2.1.8-3.9 1.8-1.8 1-3.6 2.3-4.8 3.5-1 1-.9 1.8.2 2 1.3.2 3.6-.3 6.3-1.6 4-1.9 9.9-6.4 13.7-9.6.2-.2.1-.2 0-.2z"/></svg> },
-                { name: "ADIDAS", color: "#006BFF", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M1.5 20h3.5l4-7H5.5L1.5 20zm5 0h3.5l7-12.25h-3.5L6.5 20zm5 0h3.5L21.5 2.5H18L11.5 20z"/></svg> },
-                { name: "UNDER ARMOUR", color: "#FF0000", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M12 3C9 3 6.5 5.2 6 8c2.2-.8 4-2.5 5-4.5 1 2 2.8 3.7 5 4.5-.5-2.8-3-5-6-5zm0 18c3 0 5.5-5.2 6-8-2.2.8-4 2.5-5 4.5-1-2-2.8-3.7-5-4.5.5 2.8 3 5 6 5z"/></svg> },
-                { name: "NEW BALANCE", color: "#CC0000", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M4 18h2.5v-7l5.5 7h3V6h-2.5v7l-5.5-7H4v12zm11.5-12h6.5v2.5h-6.5V6zm0 4h6.5v2.5h-6.5v-2.5zm0 4h6.5v2.5h-6.5v-2.5z"/></svg> },
-                { name: "CONVERSE", color: "#111111", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/><path d="M12 7.5l1.4 2.8 3.1.5-2.3 2.2.5 3.1-2.7-1.4-2.7 1.4.5-3.1-2.3-2.2 3.1-.5z" fill="currentColor"/></svg> },
-                { name: "PUMA", color: "#FF5A00", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M1.5 6L18 1.5l1.5 1L1.5 8z M1.5 18L18 22.5l1.5-1L1.5 16z M10 5.5l11.5 4v3L10 18.5z"/></svg> }
-              ].map((b, idx) => (
-                <div 
-                  key={idx} 
-                  className="partner-brand d-flex align-items-center gap-2 cursor-pointer transition-all"
-                  style={{
-                    color: '#6c757d',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = b.color;
-                    e.currentTarget.style.filter = `drop-shadow(0 0 10px ${b.color}40)`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#6c757d';
-                    e.currentTarget.style.filter = 'none';
-                  }}
-                >
-                  {b.svg}
-                  <span className="fw-bold tracking-wider">{b.name}</span>
-                </div>
-              ))}
-              {/* Loop Duplicate for Seamless Infinite Scrolling */}
-              {[
-                { name: "NIKE", color: "#FF5A00", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M21 6.5c-2.3 1.8-6.9 5-10.4 7.6-1.5 1.1-2.9 2-3.8 2.5-.9.4-1.4.5-1.7.5-.2 0-.3-.1-.3-.2 0-.2.2-.7.8-1.5.8-1 2.3-2.9 4.3-5.3.6-.7.5-1.2-.2-1-.7.2-2.1.8-3.9 1.8-1.8 1-3.6 2.3-4.8 3.5-1 1-.9 1.8.2 2 1.3.2 3.6-.3 6.3-1.6 4-1.9 9.9-6.4 13.7-9.6.2-.2.1-.2 0-.2z"/></svg> },
-                { name: "ADIDAS", color: "#006BFF", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M1.5 20h3.5l4-7H5.5L1.5 20zm5 0h3.5l7-12.25h-3.5L6.5 20zm5 0h3.5L21.5 2.5H18L11.5 20z"/></svg> },
-                { name: "UNDER ARMOUR", color: "#FF0000", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M12 3C9 3 6.5 5.2 6 8c2.2-.8 4-2.5 5-4.5 1 2 2.8 3.7 5 4.5-.5-2.8-3-5-6-5zm0 18c3 0 5.5-5.2 6-8-2.2.8-4 2.5-5 4.5-1-2-2.8-3.7-5-4.5.5 2.8 3 5 6 5z"/></svg> },
-                { name: "NEW BALANCE", color: "#CC0000", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M4 18h2.5v-7l5.5 7h3V6h-2.5v7l-5.5-7H4v12zm11.5-12h6.5v2.5h-6.5V6zm0 4h6.5v2.5h-6.5v-2.5zm0 4h6.5v2.5h-6.5v-2.5z"/></svg> },
-                { name: "CONVERSE", color: "#111111", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/><path d="M12 7.5l1.4 2.8 3.1.5-2.3 2.2.5 3.1-2.7-1.4-2.7 1.4.5-3.1-2.3-2.2 3.1-.5z" fill="currentColor"/></svg> },
-                { name: "PUMA", color: "#FF5A00", svg: <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M1.5 6L18 1.5l1.5 1L1.5 8z M1.5 18L18 22.5l1.5-1L1.5 16z M10 5.5l11.5 4v3L10 18.5z"/></svg> }
-              ].map((b, idx) => (
-                <div 
-                  key={`dup-${idx}`} 
-                  className="partner-brand d-flex align-items-center gap-2 cursor-pointer transition-all"
-                  style={{
-                    color: '#6c757d',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = b.color;
-                    e.currentTarget.style.filter = `drop-shadow(0 0 10px ${b.color}40)`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#6c757d';
-                    e.currentTarget.style.filter = 'none';
-                  }}
-                >
-                  {b.svg}
-                  <span className="fw-bold tracking-wider">{b.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SHOP BY SPORT CATEGORIES WITH TILT EFFECTS & DETAILS OVERLAYS */}
-      <section className="py-5 bg-white border-bottom border-light">
-        <div className="container">
-          <div className="text-center mb-5">
-            <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2">COLLECTIONS</span>
-            <h2 className="display-5 fw-bold font-display">SHOP BY SPORT</h2>
-            <p className="text-muted">Aesthetic gear calibrated specifically for your focus</p>
-          </div>
-
-          <div className="row g-4">
-            {[
-              { title: "Running", desc: "Energy & speed on asphalt", img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80", link: "/catalog?category=Running" },
-              { title: "Training", desc: "Stability & power in the gym", img: "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=600&auto=format&fit=crop&q=80", link: "/catalog?category=Training" },
-              { title: "Walking", desc: "All-day plush memory foam", img: "https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?w=600&auto=format&fit=crop&q=80", link: "/catalog?category=Walking" },
-              { title: "Lifestyle", desc: "Street design, active soul", img: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=80", link: "/catalog?category=Lifestyle" }
-            ].map((cat, idx) => (
-              <div key={idx} className="col-lg-3 col-md-6">
-                <Link to={cat.link} className="text-decoration-none">
-                  <motion.div
-                    whileHover={{ 
-                      y: -10,
-                      scale: 1.02,
-                      boxShadow: '0 20px 40px rgba(0, 162, 255, 0.15)'
-                    }}
-                    className="flux-card p-0 overflow-hidden text-white position-relative"
+      <Section3D>
+        <section 
+          className="py-4" 
+          style={{ 
+            backgroundColor: '#08080a', 
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)', 
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)', 
+            zIndex: 5, 
+            position: 'relative' 
+          }}
+        >
+          <div className="container-fluid px-0">
+            <div className="marquee-container">
+              <div className="marquee-content" style={{ gap: '8rem' }}>
+                {[
+                  { name: "RUNNER'S WORLD", color: "#00E5FF", svg: <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 3c-6.8 0-12 5.2-12 12 0 1 .1 1.9.4 2.7.3.7.8 1.3 1.4 1.7.5.3 1.1.5 1.7.5C20.3 20 22 13 22 3z"/><path d="M10 8.5C7.2 9.8 5 12.8 5 17c0 .6.1 1.2.3 1.7.2.5.5.9.9 1.2.3.2.7.3 1.1.3c2.7 0 4.2-3.5 4.7-8.2-.6-.9-1.3-1.6-2-2.1z"/><path d="M5 14c-1.8 1.2-3 3.5-3 6.5 0 .3.1.6.2.8.1.3.3.5.5.7.2.1.4.2.7.2 1.8 0 2.8-2.5 3.1-6-.7-.7-1.1-1.4-1.5-2.2z"/></svg> },
+                  { name: "OUTSIDE MAG", color: "#00E5FF", svg: <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3L2 20h20L12 3z"/><path d="M12 9l-5 8.5h10L12 9z"/></svg> },
+                  { name: "WIRED", color: "#00E5FF", svg: <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M9 9h6v6H9z"/></svg> },
+                  { name: "GEAR PATROL", color: "#00E5FF", svg: <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M4 12h4M16 12h4"/><path d="M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg> },
+                  { name: "VIBRAM", color: "#00E5FF", svg: <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 17.5L4 15V9l8-4 8 4v6l-8 4.5z"/></svg> },
+                  { name: "GORE-TEX", color: "#00E5FF", svg: <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 12l10 10 10-10L12 2zm0 16.5L5.5 12 12 5.5 18.5 12 12 18.5z"/></svg> }
+                ].map((b, idx) => (
+                  <div 
+                    key={idx} 
+                    className="partner-brand d-flex align-items-center gap-2 cursor-pointer transition-all"
                     style={{
-                      height: '380px',
-                      borderRadius: '24px',
-                      backgroundImage: `linear-gradient(to top, rgba(17,17,17,0.9) 0%, rgba(17,17,17,0.3) 50%, rgba(17,17,17,0) 100%), url(${cat.img})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'flex-end',
-                      border: '1px solid rgba(255, 255, 255, 0.08)'
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = '#ffffff';
+                      e.currentTarget.style.filter = `drop-shadow(0 0 8px ${b.color})`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
+                      e.currentTarget.style.filter = 'none';
                     }}
                   >
-                    {/* Hover Glow Accent */}
-                    <div style={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '4px',
-                      background: 'var(--flux-primary)',
-                      transform: 'scaleX(0)',
-                      transformOrigin: 'left',
-                      transition: 'transform 0.4s'
-                    }} className="glow-bar" />
-
-                    <div className="p-4" style={{ zIndex: 2 }}>
-                      <h4 className="fw-bold mb-1 text-white font-display">{cat.title}</h4>
-                      <p className="small text-white-50 mb-0 d-flex align-items-center gap-1">
-                        <span>{cat.desc}</span>
-                        <ArrowUpRight size={15} className="text-primary" />
-                      </p>
-                    </div>
-                  </motion.div>
-                </Link>
+                    {b.svg}
+                    <span className="fw-bold tracking-wider">{b.name}</span>
+                  </div>
+                ))}
+                {/* Loop Duplicate for Seamless Infinite Scrolling */}
+                {[
+                  { name: "RUNNER'S WORLD", color: "#00E5FF", svg: <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 3c-6.8 0-12 5.2-12 12 0 1 .1 1.9.4 2.7.3.7.8 1.3 1.4 1.7.5.3 1.1.5 1.7.5C20.3 20 22 13 22 3z"/><path d="M10 8.5C7.2 9.8 5 12.8 5 17c0 .6.1 1.2.3 1.7.2.5.5.9.9 1.2.3.2.7.3 1.1.3c2.7 0 4.2-3.5 4.7-8.2-.6-.9-1.3-1.6-2-2.1z"/><path d="M5 14c-1.8 1.2-3 3.5-3 6.5 0 .3.1.6.2.8.1.3.3.5.5.7.2.1.4.2.7.2 1.8 0 2.8-2.5 3.1-6-.7-.7-1.1-1.4-1.5-2.2z"/></svg> },
+                  { name: "OUTSIDE MAG", color: "#00E5FF", svg: <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3L2 20h20L12 3z"/><path d="M12 9l-5 8.5h10L12 9z"/></svg> },
+                  { name: "WIRED", color: "#00E5FF", svg: <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M9 9h6v6H9z"/></svg> },
+                  { name: "GEAR PATROL", color: "#00E5FF", svg: <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M4 12h4M16 12h4"/><path d="M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg> },
+                  { name: "VIBRAM", color: "#00E5FF", svg: <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 17.5L4 15V9l8-4 8 4v6l-8 4.5z"/></svg> },
+                  { name: "GORE-TEX", color: "#00E5FF", svg: <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 12l10 10 10-10L12 2zm0 16.5L5.5 12 12 5.5 18.5 12 12 18.5z"/></svg> }
+                ].map((b, idx) => (
+                  <div 
+                    key={`dup-${idx}`} 
+                    className="partner-brand d-flex align-items-center gap-2 cursor-pointer transition-all"
+                    style={{
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = '#ffffff';
+                      e.currentTarget.style.filter = `drop-shadow(0 0 8px ${b.color})`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
+                      e.currentTarget.style.filter = 'none';
+                    }}
+                  >
+                    {b.svg}
+                    <span className="fw-bold tracking-wider">{b.name}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURED SNEAKERS GRID */}
-      <section className="py-5 bg-white border-bottom border-light">
-        <div className="container">
-          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-5">
-            <div>
-              <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2">FEATURED PRODUCTS</span>
-              <h2 className="display-5 fw-bold font-display">TRENDING RELEASES</h2>
-            </div>
-            
-            {/* Filter Tabs */}
-            <div className="d-flex bg-light p-1 rounded-pill mt-3 mt-md-0" style={{ maxWidth: '360px' }}>
-              {['new', 'top', 'limited'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className="btn btn-sm px-4 rounded-pill border-0 py-2 small fw-bold font-monospace text-uppercase transition-all position-relative"
-                  style={{
-                    backgroundColor: activeTab === tab ? 'var(--flux-primary)' : 'transparent',
-                    color: activeTab === tab ? '#ffffff' : 'var(--flux-text-muted)',
-                    boxShadow: activeTab === tab ? 'var(--shadow-glow)' : 'none',
-                    zIndex: 2
-                  }}
-                >
-                  {tab === 'new' ? 'New' : tab === 'top' ? 'Top Rated' : 'Limited'}
-                </button>
-              ))}
             </div>
           </div>
+        </section>
+      </Section3D>
 
-          {/* Product Cards */}
-          <div className="row g-4">
-            <AnimatePresence mode="wait">
-              {getTabProducts().map((product) => (
-                <motion.div 
-                  key={product.id} 
-                  className="col-lg-4 col-md-6"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <ProductCard product={product} />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+      {/* NATURE RUNNER PARALLAX SECTION */}
+      <NatureRunnerSection />
 
-          <div className="text-center mt-5">
-            <Link to="/catalog" className="btn btn-flux-secondary px-5 py-3 rounded-pill fw-bold">View Full Catalog</Link>
-          </div>
-        </div>
-      </section>
+      {/* REDESIGNED PREMIUM TRENDING RELEASES SECTION */}
+      <Section3D>
+        <TrendingSection />
+      </Section3D>
 
       <section 
         ref={scrollContainerRef} 
         className="position-relative w-100" 
         style={{ 
-          minHeight: '380vh',
+          minHeight: '240vh',
           backgroundColor: '#08080a',
           zIndex: 10
         }}
@@ -1286,273 +1390,386 @@ export const Home = () => {
       </section>
 
       {/* REDESIGNED TIMELINE WITH SCROLL ANIMATIONS & ALTERNATING LAYOUT */}
-      <section className="py-5 text-white position-relative" style={{ backgroundColor: '#08080a' }}>
-        <div className="container">
-          <div className="text-center mb-5">
-            <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2" style={{ backgroundColor: 'rgba(0,107,255,0.2)' }}>TIMELINE</span>
-            <h2 className="display-6 fw-bold text-white font-display">MILESTONES OF INNOVATION</h2>
-            <p className="text-white-50">Tracing our commitment to performance over the years with alternating timeline breakthrough nodes</p>
-          </div>
+      <Section3D>
+        <section className="py-5 text-white position-relative" style={{ backgroundColor: '#08080a' }}>
+          <div className="container">
+            <div className="text-center mb-5">
+              <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2" style={{ backgroundColor: 'rgba(0,107,255,0.2)' }}>TIMELINE</span>
+              <h2 className="display-6 fw-bold text-white font-display">MILESTONES OF INNOVATION</h2>
+              <p className="text-white-50">Tracing our commitment to performance over the years with alternating timeline breakthrough nodes</p>
+            </div>
 
-          {/* Desktop Alternating Timeline */}
-          <div className="d-none d-md-block position-relative py-5">
-            {/* Center Glowing Progress Track */}
-            <div style={{
-              position: 'absolute',
-              left: '50%',
-              top: 0,
-              bottom: 0,
-              width: '4px',
-              transform: 'translateX(-50%)',
-              background: 'linear-gradient(to bottom, var(--flux-primary) 0%, var(--flux-accent) 100%)',
-              boxShadow: '0 0 15px rgba(0, 162, 255, 0.3)',
+            {/* Desktop Alternating Timeline */}
+            <div className="d-none d-md-block position-relative py-5">
+              {/* Center Glowing Progress Track */}
+              <div style={{
+                position: 'absolute',
+                left: '50%',
+                top: 0,
+                bottom: 0,
+                width: '4px',
+                transform: 'translateX(-50%)',
+                background: 'linear-gradient(to bottom, var(--flux-primary) 0%, var(--flux-accent) 100%)',
+                boxShadow: '0 0 15px rgba(0, 162, 255, 0.3)',
+                zIndex: 0
+              }} />
+
+              {timelineEvents.map((event, idx) => {
+                const isEven = idx % 2 === 0;
+                return (
+                  <div key={idx} className="row g-0 align-items-center mb-5 position-relative" style={{ zIndex: 1 }}>
+                    {/* Left Column (shows even events) */}
+                    <div className={`col-md-5 ${isEven ? 'text-end order-1' : 'order-3 order-md-1 d-none d-md-block'}`}>
+                      {isEven && (
+                        <motion.div
+                          initial={{ opacity: 0, x: -50 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true, margin: "-100px" }}
+                          transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+                          className="glass-panel p-4 text-start d-inline-block shadow-sm"
+                          style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '24px',
+                            maxWidth: '450px'
+                          }}
+                          whileHover={{ scale: 1.03, borderColor: 'var(--flux-accent)', boxShadow: '0 0 20px rgba(0, 229, 255, 0.15)' }}
+                        >
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <span className="badge bg-primary px-3 py-1.5 font-monospace rounded-pill">{event.year}</span>
+                            <h4 className="fw-bold text-white font-display mb-0 small text-uppercase tracking-wider ms-3">{event.title}</h4>
+                          </div>
+                          <p className="text-white-50 mb-0 small" style={{ lineHeight: '1.6' }}>{event.desc}</p>
+                        </motion.div>
+                      )}
+                    </div>
+
+                    {/* Center Badge Dot Column */}
+                    <div className="col-md-2 d-flex justify-content-center order-2 position-relative" style={{ minHeight: '60px' }}>
+                      <motion.div 
+                        initial={{ scale: 0 }}
+                        whileInView={{ scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ type: 'spring', damping: 15, stiffness: 150, delay: 0.1 }}
+                        className="d-flex align-items-center justify-content-center"
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          backgroundColor: '#111111',
+                          border: '4px solid var(--flux-primary)',
+                          boxShadow: '0 0 15px var(--flux-primary)',
+                          zIndex: 2,
+                          cursor: 'pointer'
+                        }}
+                        whileHover={{ scale: 1.3, borderColor: 'var(--flux-accent)', boxShadow: '0 0 20px var(--flux-accent)' }}
+                      >
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--flux-accent)' }} />
+                      </motion.div>
+                    </div>
+
+                    {/* Right Column (shows odd events) */}
+                    <div className={`col-md-5 ${!isEven ? 'text-start order-3' : 'order-1 order-md-3 d-none d-md-block'}`}>
+                      {!isEven && (
+                        <motion.div
+                          initial={{ opacity: 0, x: 50 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true, margin: "-100px" }}
+                          transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+                          className="glass-panel p-4 text-start d-inline-block shadow-sm"
+                          style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '24px',
+                            maxWidth: '450px'
+                          }}
+                          whileHover={{ scale: 1.03, borderColor: 'var(--flux-accent)', boxShadow: '0 0 20px rgba(0, 229, 255, 0.15)' }}
+                        >
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h4 className="fw-bold text-white font-display mb-0 small text-uppercase tracking-wider me-3">{event.title}</h4>
+                            <span className="badge bg-primary px-3 py-1.5 font-monospace rounded-pill">{event.year}</span>
+                          </div>
+                          <p className="text-white-50 mb-0 small" style={{ lineHeight: '1.6' }}>{event.desc}</p>
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Mobile Stacked Timeline */}
+            <div className="d-block d-md-none position-relative py-4 ps-4 ms-2">
+              <div style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: '3px',
+                background: 'linear-gradient(to bottom, var(--flux-primary) 0%, var(--flux-accent) 100%)',
+                boxShadow: '0 0 10px rgba(0, 162, 255, 0.3)'
+              }} />
+              
+              {timelineEvents.map((event, idx) => (
+                <motion.div 
+                  key={idx}
+                  className="position-relative mb-4 pb-2"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: idx * 0.1 }}
+                >
+                  {/* Node */}
+                  <div style={{
+                    position: 'absolute',
+                    left: '-26px',
+                    top: '6px',
+                    width: '16px',
+                    height: '16px',
+                    borderRadius: '50%',
+                    backgroundColor: '#111111',
+                    border: '3px solid var(--flux-primary)',
+                    boxShadow: '0 0 8px var(--flux-primary)',
+                    zIndex: 2
+                  }} />
+                  
+                  <div className="glass-panel p-4 text-start shadow-sm" style={{
+                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '20px'
+                  }}>
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <h5 className="fw-bold text-white font-display mb-0 small text-uppercase">{event.title}</h5>
+                      <span className="badge bg-primary px-2.5 py-1 font-monospace rounded-pill" style={{ fontSize: '11px' }}>{event.year}</span>
+                    </div>
+                    <p className="text-white-50 mb-0 small" style={{ fontSize: '12px' }}>{event.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </Section3D>
+
+      {/* TESTIMONIALS SLIDER SECTION (Redesigned 3D Coverflow) */}
+      <Section3D>
+        <section 
+          className="py-5 position-relative" 
+          style={{ 
+            backgroundColor: '#08080a', 
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)', 
+            overflow: 'hidden', 
+            minHeight: '620px' 
+          }}
+        >
+          {/* Floating background glow lights */}
+          <div 
+            className="float-glow-left position-absolute" 
+            style={{
+              width: '450px',
+              height: '450px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(0, 162, 255, 0.12) 0%, rgba(0, 0, 0, 0) 70%)',
+              filter: 'blur(55px)',
+              top: '10%',
+              left: '-15%',
+              pointerEvents: 'none',
               zIndex: 0
-            }} />
+            }}
+          />
+          <div 
+            className="float-glow-right position-absolute" 
+            style={{
+              width: '500px',
+              height: '500px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(0, 229, 255, 0.08) 0%, rgba(0, 0, 0, 0) 70%)',
+              filter: 'blur(60px)',
+              bottom: '10%',
+              right: '-15%',
+              pointerEvents: 'none',
+              zIndex: 0
+            }}
+          />
 
-            {timelineEvents.map((event, idx) => {
-              const isEven = idx % 2 === 0;
-              return (
-                <div key={idx} className="row g-0 align-items-center mb-5 position-relative" style={{ zIndex: 1 }}>
-                  {/* Left Column (shows even events) */}
-                  <div className={`col-md-5 ${isEven ? 'text-end order-1' : 'order-3 order-md-1 d-none d-md-block'}`}>
-                    {isEven && (
-                      <motion.div
-                        initial={{ opacity: 0, x: -50 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true, margin: "-100px" }}
-                        transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-                        className="glass-panel p-4 text-start d-inline-block shadow-sm"
-                        style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                          border: '1px solid rgba(255, 255, 255, 0.08)',
-                          borderRadius: '24px',
-                          maxWidth: '450px'
-                        }}
-                        whileHover={{ scale: 1.03, borderColor: 'var(--flux-accent)', boxShadow: '0 0 20px rgba(0, 229, 255, 0.15)' }}
-                      >
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <span className="badge bg-primary px-3 py-1.5 font-monospace rounded-pill">{event.year}</span>
-                          <h4 className="fw-bold text-white font-display mb-0 small text-uppercase tracking-wider ms-3">{event.title}</h4>
-                        </div>
-                        <p className="text-white-50 mb-0 small" style={{ lineHeight: '1.6' }}>{event.desc}</p>
-                      </motion.div>
-                    )}
-                  </div>
+          <div className="container position-relative" style={{ zIndex: 1 }}>
+            <div className="text-center mb-5">
+              <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2">TESTIMONIALS</span>
+              <h2 className="display-5 fw-bold font-display text-white">ATHLETE TRUST</h2>
+              <p className="text-white-50">Proven on tracks, trails, and urban pavements around the globe</p>
+            </div>
 
-                  {/* Center Badge Dot Column */}
-                  <div className="col-md-2 d-flex justify-content-center order-2 position-relative" style={{ minHeight: '60px' }}>
-                    <motion.div 
-                      initial={{ scale: 0 }}
-                      whileInView={{ scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ type: 'spring', damping: 15, stiffness: 150, delay: 0.1 }}
-                      className="d-flex align-items-center justify-content-center"
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        backgroundColor: '#111111',
-                        border: '4px solid var(--flux-primary)',
-                        boxShadow: '0 0 15px var(--flux-primary)',
-                        zIndex: 2,
-                        cursor: 'pointer'
-                      }}
-                      whileHover={{ scale: 1.3, borderColor: 'var(--flux-accent)', boxShadow: '0 0 20px var(--flux-accent)' }}
-                    >
-                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--flux-accent)' }} />
-                    </motion.div>
-                  </div>
-
-                  {/* Right Column (shows odd events) */}
-                  <div className={`col-md-5 ${!isEven ? 'text-start order-3' : 'order-1 order-md-3 d-none d-md-block'}`}>
-                    {!isEven && (
-                      <motion.div
-                        initial={{ opacity: 0, x: 50 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true, margin: "-100px" }}
-                        transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-                        className="glass-panel p-4 text-start d-inline-block shadow-sm"
-                        style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                          border: '1px solid rgba(255, 255, 255, 0.08)',
-                          borderRadius: '24px',
-                          maxWidth: '450px'
-                        }}
-                        whileHover={{ scale: 1.03, borderColor: 'var(--flux-accent)', boxShadow: '0 0 20px rgba(0, 229, 255, 0.15)' }}
-                      >
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <h4 className="fw-bold text-white font-display mb-0 small text-uppercase tracking-wider me-3">{event.title}</h4>
-                          <span className="badge bg-primary px-3 py-1.5 font-monospace rounded-pill">{event.year}</span>
-                        </div>
-                        <p className="text-white-50 mb-0 small" style={{ lineHeight: '1.6' }}>{event.desc}</p>
-                      </motion.div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Mobile Stacked Timeline */}
-          <div className="d-block d-md-none position-relative py-4 ps-4 ms-2">
-            <div style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: '3px',
-              background: 'linear-gradient(to bottom, var(--flux-primary) 0%, var(--flux-accent) 100%)',
-              boxShadow: '0 0 10px rgba(0, 162, 255, 0.3)'
-            }} />
-            
-            {timelineEvents.map((event, idx) => (
-              <motion.div 
-                key={idx}
-                className="position-relative mb-4 pb-2"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: idx * 0.1 }}
+            <div className="position-relative px-4 px-md-5">
+              {/* Testimonials Left Arrow */}
+              <button 
+                onClick={prevTesti}
+                className="btn btn-dark rounded-circle shadow-lg border-0 d-flex align-items-center justify-content-center p-2 position-absolute"
+                style={{ 
+                  left: '5%', 
+                  top: '160px', 
+                  zIndex: 20, 
+                  width: '46px', 
+                  height: '46px', 
+                  backgroundColor: 'rgba(20,20,25,0.85)', 
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#ffffff',
+                  backdropFilter: 'blur(8px)'
+                }}
               >
-                {/* Node */}
-                <div style={{
-                  position: 'absolute',
-                  left: '-26px',
-                  top: '6px',
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  backgroundColor: '#111111',
-                  border: '3px solid var(--flux-primary)',
-                  boxShadow: '0 0 8px var(--flux-primary)',
-                  zIndex: 2
-                }} />
-                
-                <div className="glass-panel p-4 text-start shadow-sm" style={{
-                  backgroundColor: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '20px'
-                }}>
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h5 className="fw-bold text-white font-display mb-0 small text-uppercase">{event.title}</h5>
-                    <span className="badge bg-primary px-2.5 py-1 font-monospace rounded-pill" style={{ fontSize: '11px' }}>{event.year}</span>
-                  </div>
-                  <p className="text-white-50 mb-0 small" style={{ fontSize: '12px' }}>{event.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+                <ChevronLeft size={20} />
+              </button>
 
-      {/* TESTIMONIALS SLIDER SECTION (3-Box Sliding Carousel) */}
-      <section className="py-5 bg-white border-bottom border-light position-relative" style={{ overflow: 'hidden' }}>
-        {/* Floating background glow lights */}
-        <div 
-          className="float-glow-left position-absolute" 
-          style={{
-            width: '350px',
-            height: '350px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(0, 162, 255, 0.08) 0%, rgba(0, 0, 0, 0) 70%)',
-            filter: 'blur(45px)',
-            top: '5%',
-            left: '-10%',
-            pointerEvents: 'none',
-            zIndex: 0
-          }}
-        />
-        <div 
-          className="float-glow-right position-absolute" 
-          style={{
-            width: '400px',
-            height: '400px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(0, 229, 255, 0.06) 0%, rgba(0, 0, 0, 0) 70%)',
-            filter: 'blur(50px)',
-            bottom: '5%',
-            right: '-10%',
-            pointerEvents: 'none',
-            zIndex: 0
-          }}
-        />
+              {/* Testimonials Right Arrow */}
+              <button 
+                onClick={nextTesti}
+                className="btn btn-dark rounded-circle shadow-lg border-0 d-flex align-items-center justify-content-center p-2 position-absolute"
+                style={{ 
+                  right: '5%', 
+                  top: '160px', 
+                  zIndex: 20, 
+                  width: '46px', 
+                  height: '46px', 
+                  backgroundColor: 'rgba(20,20,25,0.85)', 
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#ffffff',
+                  backdropFilter: 'blur(8px)'
+                }}
+              >
+                <ChevronRight size={20} />
+              </button>
 
-        <div className="container position-relative" style={{ zIndex: 1 }}>
-          <div className="text-center mb-5">
-            <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2">TESTIMONIALS</span>
-            <h2 className="display-5 fw-bold font-display">ATHLETE TRUST</h2>
-            <p className="text-muted">Proven on tracks, trails, and urban pavements around the globe</p>
-          </div>
-
-          <div className="position-relative px-4 px-md-5">
-            {/* Testimonials Left Arrow */}
-            <button 
-              onClick={prevTesti}
-              className="btn btn-light rounded-circle shadow-sm border d-flex align-items-center justify-content-center p-2 position-absolute"
-              style={{ left: '-15px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: '46px', height: '46px', backgroundColor: 'rgba(255,255,255,0.9)' }}
-              disabled={maxIndex <= 0}
-            >
-              <ChevronLeft size={20} />
-            </button>
-
-            {/* Testimonials Right Arrow */}
-            <button 
-              onClick={nextTesti}
-              className="btn btn-light rounded-circle shadow-sm border d-flex align-items-center justify-content-center p-2 position-absolute"
-              style={{ right: '-15px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: '46px', height: '46px', backgroundColor: 'rgba(255,255,255,0.9)' }}
-              disabled={maxIndex <= 0}
-            >
-              <ChevronRight size={20} />
-            </button>
-
-            {/* Carousel Viewport */}
-            <div ref={containerRef} style={{ overflow: 'hidden', width: '100%', padding: '15px 0' }}>
-              <motion.div 
-                className="d-flex"
-                animate={{ x: -translateX }}
-                transition={{ type: 'spring', stiffness: 140, damping: 20 }}
+              {/* 3D Coverflow Container */}
+              <div 
+                style={{ 
+                  position: 'relative', 
+                  height: '390px', 
+                  perspective: '1200px', 
+                  transformStyle: 'preserve-3d', 
+                  width: '100%', 
+                  overflow: 'visible' 
+                }}
               >
                 {testimonials.map((testi, idx) => {
-                  const isHighlighted = (visibleCards === 3 && idx === testiIndex + 1) || (visibleCards !== 3 && idx === testiIndex);
-                  
+                  // Relative circular offset
+                  let offset = idx - testiIndex;
+                  const total = testimonials.length;
+                  if (offset < -total / 2) offset += total;
+                  if (offset > total / 2) offset -= total;
+
+                  const isActive = offset === 0;
+                  const isLeft = offset === -1;
+                  const isRight = offset === 1;
+
+                  // Define 3D animations
+                  let xVal = 0;
+                  let scaleVal = 0.7;
+                  let rotateYVal = 0;
+                  let zVal = -300;
+                  let opacityVal = 0;
+                  let zIndexVal = 1;
+
+                  if (isActive) {
+                    xVal = 0;
+                    scaleVal = 1.05;
+                    rotateYVal = 0;
+                    zVal = 120;
+                    opacityVal = 1;
+                    zIndexVal = 10;
+                  } else if (isLeft) {
+                    xVal = isMobile ? -130 : -340;
+                    scaleVal = 0.85;
+                    rotateYVal = 35;
+                    zVal = -100;
+                    opacityVal = 0.7;
+                    zIndexVal = 5;
+                  } else if (isRight) {
+                    xVal = isMobile ? 130 : 340;
+                    scaleVal = 0.85;
+                    rotateYVal = -35;
+                    zVal = -100;
+                    opacityVal = 0.7;
+                    zIndexVal = 5;
+                  } else if (offset === -2) {
+                    xVal = isMobile ? -220 : -550;
+                    scaleVal = 0.75;
+                    rotateYVal = 55;
+                    zVal = -220;
+                    opacityVal = 0.25;
+                    zIndexVal = 2;
+                  } else if (offset === 2) {
+                    xVal = isMobile ? 220 : 550;
+                    scaleVal = 0.75;
+                    rotateYVal = -55;
+                    zVal = -220;
+                    opacityVal = 0.25;
+                    zIndexVal = 2;
+                  }
+
                   return (
-                    <motion.div 
-                      key={idx} 
-                      style={{ 
-                        width: `${cardWidth}px`, 
-                        marginRight: `${gap}px`, 
-                        flexShrink: 0,
-                        padding: '12px 0'
+                    <motion.div
+                      key={idx}
+                      style={{
+                        position: 'absolute',
+                        width: isMobile ? '280px' : '420px',
+                        height: '330px',
+                        top: '15px',
+                        left: '50%',
+                        marginLeft: isMobile ? '-140px' : '-210px',
+                        transformStyle: 'preserve-3d',
+                        cursor: (isLeft || isRight) ? 'pointer' : 'default',
+                        pointerEvents: (isActive || isLeft || isRight) ? 'auto' : 'none'
                       }}
                       animate={{
-                        scale: isHighlighted ? 1.04 : 0.96,
-                        opacity: isHighlighted ? 1 : 0.82
+                        x: xVal,
+                        scale: scaleVal,
+                        rotateY: rotateYVal,
+                        z: zVal,
+                        opacity: opacityVal,
+                        zIndex: zIndexVal
                       }}
-                      transition={{ type: 'spring', stiffness: 150, damping: 20 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 110,
+                        damping: 18
+                      }}
+                      onClick={() => {
+                        if (isLeft || isRight) {
+                          setTestiIndex(idx);
+                        }
+                      }}
                     >
                       <div
-                        className={`testimonial-card-premium p-4 p-md-5 h-100 d-flex flex-column justify-content-between position-relative overflow-hidden ${isHighlighted ? 'card-highlighted' : ''}`}
+                        className={`p-4 p-md-5 h-100 d-flex flex-column justify-content-between position-relative overflow-hidden`}
                         style={{
-                          minHeight: '270px'
+                          borderRadius: '24px',
+                          background: isActive 
+                            ? 'rgba(10, 20, 12, 0.85)' 
+                            : 'rgba(255, 255, 255, 0.02)',
+                          backdropFilter: 'blur(16px)',
+                          WebkitBackdropFilter: 'blur(16px)',
+                          border: isActive 
+                            ? '1px solid rgba(0, 229, 255, 0.45)' 
+                            : '1px solid rgba(255, 255, 255, 0.08)',
+                          boxShadow: isActive 
+                            ? '0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 229, 255, 0.2) inset' 
+                            : '0 10px 25px rgba(0, 0, 0, 0.3)',
+                          transition: 'all 0.4s ease',
+                          transformStyle: 'preserve-3d'
                         }}
                       >
                         {/* Decorative Quote Icon */}
-                        <motion.div 
+                        <div 
                           className="position-absolute" 
                           style={{ 
-                            top: '15px', 
-                            left: '20px', 
-                            color: isHighlighted ? 'var(--flux-primary)' : 'var(--flux-secondary)',
-                            opacity: isHighlighted ? 0.08 : 0.03,
+                            top: '20px', 
+                            right: '25px', 
+                            color: isActive ? 'var(--flux-primary)' : 'rgba(255, 255, 255, 0.08)',
+                            opacity: 0.15,
                             pointerEvents: 'none' 
                           }}
-                          animate={{
-                            y: isHighlighted ? [0, -5, 0] : 0
-                          }}
-                          transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
                         >
-                          <Quote size={80} fill="currentColor" />
-                        </motion.div>
+                          <Quote size={60} fill="currentColor" />
+                        </div>
                         
                         <div>
                           {/* Star Rating */}
@@ -1563,14 +1780,21 @@ export const Home = () => {
                           </div>
 
                           {/* Testimonial Quote */}
-                          <p className="text-secondary font-display fs-6 mb-4 italic" style={{ lineHeight: '1.65', fontSize: '0.94rem' }}>
+                          <p 
+                            className="font-display italic text-white mb-4" 
+                            style={{ 
+                              lineHeight: '1.65', 
+                              fontSize: isMobile ? '0.85rem' : '0.96rem',
+                              color: 'rgba(255, 255, 255, 0.95)'
+                            }}
+                          >
                             "{testi.quote}"
                           </p>
                         </div>
 
                         {/* Athlete Details */}
-                        <div className="d-flex align-items-center gap-3 pt-3 border-top border-light-subtle">
-                          <div className={`rounded-circle ${isHighlighted ? 'avatar-ring-pulse' : ''}`} style={{ padding: '2px' }}>
+                        <div className="d-flex align-items-center gap-3 pt-3 border-top" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+                          <div className={`rounded-circle ${isActive ? 'avatar-ring-pulse' : ''}`} style={{ padding: '2px' }}>
                             <img 
                               src={testi.avatar} 
                               alt={testi.author} 
@@ -1579,69 +1803,71 @@ export const Home = () => {
                                 height: '46px', 
                                 borderRadius: '50%', 
                                 objectFit: 'cover', 
-                                border: '2px solid var(--flux-primary)',
-                                boxShadow: '0 0 8px rgba(0, 162, 255, 0.12)'
+                                border: isActive ? '2px solid var(--flux-primary)' : '2px solid rgba(255,255,255,0.35)',
+                                boxShadow: isActive ? '0 0 8px rgba(0, 162, 255, 0.3)' : 'none'
                               }} 
                             />
                           </div>
                           <div className="text-start">
-                            <h6 className="fw-bold mb-0 text-dark font-display" style={{ fontSize: '0.9rem' }}>{testi.author}</h6>
-                            <span className="text-muted small" style={{ fontSize: '0.75rem' }}>{testi.role}</span>
+                            <h6 className="fw-bold mb-0 text-white font-display" style={{ fontSize: '0.9rem' }}>{testi.author}</h6>
+                            <span className="text-white-50 small" style={{ fontSize: '0.75rem' }}>{testi.role}</span>
                           </div>
                         </div>
                       </div>
                     </motion.div>
                   );
                 })}
-              </motion.div>
-            </div>
+              </div>
 
-            {/* Testimonials Slider Dots */}
-            <div className="d-flex justify-content-center gap-2 mt-4">
-              {[...Array(maxIndex + 1)].map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setTestiIndex(idx)}
-                  className="btn p-0 border-0 rounded-circle"
-                  style={{
-                    width: '10px',
-                    height: '10px',
-                    backgroundColor: testiIndex === idx ? 'var(--flux-primary)' : 'rgba(0,0,0,0.15)',
-                    transform: testiIndex === idx ? 'scale(1.3)' : 'scale(1)',
-                    transition: 'all 0.3s ease'
-                  }}
-                />
-              ))}
-            </div>
+              {/* Testimonials Slider Dots */}
+              <div className="d-flex justify-content-center gap-2 mt-4" style={{ position: 'relative', zIndex: 12 }}>
+                {[...Array(testimonials.length)].map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setTestiIndex(idx)}
+                    className="btn p-0 border-0 rounded-circle"
+                    style={{
+                      width: '10px',
+                      height: '10px',
+                      backgroundColor: testiIndex === idx ? 'var(--flux-primary)' : 'rgba(255,255,255,0.25)',
+                      transform: testiIndex === idx ? 'scale(1.3)' : 'scale(1)',
+                      transition: 'all 0.3s ease'
+                    }}
+                  />
+                ))}
+              </div>
 
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </Section3D>
 
       {/* TECH VIDEO PREVIEW */}
-      <section className="py-5 bg-dark text-white position-relative" style={{
-        backgroundImage: 'linear-gradient(rgba(17,17,17,0.85), rgba(17,17,17,0.85)), url(https://images.unsplash.com/photo-1539185441755-769473a23570?w=1200&auto=format&fit=crop&q=80)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        minHeight: '400px',
-        display: 'flex',
-        alignItems: 'center'
-      }}>
-        <div className="container text-center">
-          <motion.div 
-            whileHover={{ scale: 1.1 }}
-            className="btn btn-primary rounded-circle p-4 d-inline-flex align-items-center justify-content-center mb-4 shadow-lg cursor-pointer"
-            style={{ width: '80px', height: '80px', backgroundColor: 'var(--flux-primary)', boxShadow: '0 0 25px rgba(0, 162, 255, 0.4)' }}
-            onClick={() => setIsVideoOpen(true)}
-          >
-            <Play size={32} fill="#ffffff" className="ms-1" />
-          </motion.div>
-          <h2 className="display-6 fw-bold font-display text-white mb-2 text-uppercase">WATCH LAB TECH TESTING</h2>
-          <p className="text-white mx-auto" style={{ maxWidth: '600px', opacity: 0.85 }}>
-            See how the dual-density EnergyFloat foam performs under 3D force-plate modeling, yielding 25% more rebound than standard EVA midsoles.
-          </p>
-        </div>
-      </section>
+      <Section3D>
+        <section className="py-5 bg-dark text-white position-relative" style={{
+          backgroundImage: 'linear-gradient(rgba(17,17,17,0.85), rgba(17,17,17,0.85)), url(https://images.unsplash.com/photo-1539185441755-769473a23570?w=1200&auto=format&fit=crop&q=80)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          minHeight: '400px',
+          display: 'flex',
+          alignItems: 'center'
+        }}>
+          <div className="container text-center">
+            <motion.div 
+              whileHover={{ scale: 1.1 }}
+              className="btn btn-primary rounded-circle p-4 d-inline-flex align-items-center justify-content-center mb-4 shadow-lg cursor-pointer"
+              style={{ width: '80px', height: '80px', backgroundColor: 'var(--flux-primary)', boxShadow: '0 0 25px rgba(0, 162, 255, 0.4)' }}
+              onClick={() => setIsVideoOpen(true)}
+            >
+              <Play size={32} fill="#ffffff" className="ms-1" />
+            </motion.div>
+            <h2 className="display-6 fw-bold font-display text-white mb-2 text-uppercase">WATCH LAB TECH TESTING</h2>
+            <p className="text-white mx-auto" style={{ maxWidth: '600px', opacity: 0.85 }}>
+              See how the dual-density EnergyFloat foam performs under 3D force-plate modeling, yielding 25% more rebound than standard EVA midsoles.
+            </p>
+          </div>
+        </section>
+      </Section3D>
 
       {/* Cinematic Video Overlay Modal */}
       <AnimatePresence>
@@ -1688,48 +1914,50 @@ export const Home = () => {
       </AnimatePresence>
 
       {/* INSTAGRAM GALLERY WITH HOVER OVERLAYS */}
-      <section className="py-5">
-        <div className="container">
-          <div className="text-center mb-5">
-            <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2">SOCIAL GRID</span>
-            <h2 className="display-6 fw-bold font-display">SHARED VIA #FLUXRUN</h2>
-            <p className="text-muted">See how the community styles and pushes limits worldwide</p>
-          </div>
+      <Section3D>
+        <section className="py-5">
+          <div className="container">
+            <div className="text-center mb-5">
+              <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2">SOCIAL GRID</span>
+              <h2 className="display-6 fw-bold font-display">SHARED VIA #FLUXRUN</h2>
+              <p className="text-muted">See how the community styles and pushes limits worldwide</p>
+            </div>
 
-          <div className="row g-3">
-            {[
-              "https://images.unsplash.com/photo-1539185441755-769473a23570?w=300&auto=format&fit=crop&q=80",
-              "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=300&auto=format&fit=crop&q=80",
-              "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=300&auto=format&fit=crop&q=80",
-              "https://images.unsplash.com/photo-1486218119243-13883505764c?w=300&auto=format&fit=crop&q=80",
-              "https://images.unsplash.com/photo-1530143311094-34d807799e8f?w=300&auto=format&fit=crop&q=80",
-              "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&auto=format&fit=crop&q=80"
-            ].map((img, idx) => (
-              <div key={idx} className="col-lg-2 col-md-4 col-6">
-                <motion.div 
-                  whileHover={{ 
-                    scale: 1.05,
-                    boxShadow: '0 10px 20px rgba(0, 162, 255, 0.1)'
-                  }}
-                  className="rounded-4 overflow-hidden shadow-sm position-relative cursor-pointer"
-                  style={{ height: '180px', border: '1px solid rgba(0, 0, 0, 0.05)' }}
-                >
-                  <img src={img} alt="Instagram Showcase" className="w-100 h-100 object-fit-cover" />
-                  
-                  {/* Subtle hover blur gradient overlay */}
-                  <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    backgroundColor: 'rgba(0, 162, 255, 0.15)',
-                    opacity: 0,
-                    transition: 'opacity 0.3s'
-                  }} className="insta-hover-overlay" />
-                </motion.div>
-              </div>
-            ))}
+            <div className="row g-3">
+              {[
+                "https://images.unsplash.com/photo-1539185441755-769473a23570?w=300&auto=format&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=300&auto=format&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=300&auto=format&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1486218119243-13883505764c?w=300&auto=format&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1530143311094-34d807799e8f?w=300&auto=format&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&auto=format&fit=crop&q=80"
+              ].map((img, idx) => (
+                <div key={idx} className="col-lg-2 col-md-4 col-6">
+                  <motion.div 
+                    whileHover={{ 
+                      scale: 1.05,
+                      boxShadow: '0 10px 20px rgba(0, 162, 255, 0.1)'
+                    }}
+                    className="rounded-4 overflow-hidden shadow-sm position-relative cursor-pointer"
+                    style={{ height: '180px', border: '1px solid rgba(0, 0, 0, 0.05)' }}
+                  >
+                    <img src={img} alt="Instagram Showcase" className="w-100 h-100 object-fit-cover" />
+                    
+                    {/* Subtle hover blur gradient overlay */}
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      backgroundColor: 'rgba(0, 162, 255, 0.15)',
+                      opacity: 0,
+                      transition: 'opacity 0.3s'
+                    }} className="insta-hover-overlay" />
+                  </motion.div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </Section3D>
     </div>
   );
 };
