@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence, useScroll, useMotionValueEvent, useSpring, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useMotionValueEvent, useSpring, useTransform, useVelocity } from 'framer-motion';
 import { TrendingSection } from '../components/TrendingSection';
 import modelImg from '../../images/model.png';
+import productVideo from '../../video/Athlete_sprinting_with_FluxRun_shoe_202607161657.mp4';
 import { 
   Zap, Activity, Star, 
   ChevronLeft, ChevronRight, Play, Quote, X, Layers, Wind, ArrowUpRight
@@ -20,6 +21,466 @@ const Section3D = ({ children }) => {
     >
       {children}
     </motion.div>
+  );
+};
+
+// Reusable 3D Tilt Card with cursor tracking and glare overlay
+const ThreeDTiltCard = ({ children, className = "", style = {} }) => {
+  const x = useSpring(0, { stiffness: 120, damping: 20 });
+  const y = useSpring(0, { stiffness: 120, damping: 20 });
+  const glareX = useSpring(0, { stiffness: 120, damping: 20 });
+  const glareY = useSpring(0, { stiffness: 120, damping: 20 });
+  const glareOpacity = useSpring(0, { stiffness: 120, damping: 20 });
+
+  const rotateX = useTransform(y, [-0.5, 0.5], [15, -15]);
+  const rotateY = useTransform(x, [-0.5, 0.5], [-15, 15]);
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    x.set(mouseX / rect.width - 0.5);
+    y.set(mouseY / rect.height - 0.5);
+
+    glareX.set((mouseX / rect.width) * 100);
+    glareY.set((mouseY / rect.height) * 100);
+    glareOpacity.set(0.65);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+    glareOpacity.set(0);
+  };
+
+  const glareBackground = useTransform(
+    [glareX, glareY],
+    ([gx, gy]) => `radial-gradient(circle 120px at ${gx}% ${gy}%, rgba(0, 162, 255, 0.35) 0%, rgba(0, 162, 255, 0) 100%)`
+  );
+
+  return (
+    <motion.div
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      whileHover="hover"
+      initial="initial"
+      className={className}
+      style={{
+        ...style,
+        rotateX,
+        rotateY,
+        transformStyle: 'preserve-3d',
+        perspective: '1000px',
+        position: 'relative'
+      }}
+    >
+      <motion.div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: glareBackground,
+          opacity: glareOpacity,
+          zIndex: 5,
+          pointerEvents: 'none',
+          borderRadius: 'inherit'
+        }}
+      />
+      {children}
+    </motion.div>
+  );
+};
+
+// 4D Motion Video Preview Section
+// ThreeDParallaxGallery for Instagram grid redesign
+const ThreeDParallaxGallery = () => {
+  const containerRef = useRef(null);
+  const mouseX = useSpring(0, { stiffness: 60, damping: 20 });
+  const mouseY = useSpring(0, { stiffness: 60, damping: 20 });
+
+  const handleMouseMove = (e) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
+
+  // Convert mouse movement to 3D rotation of the entire gallery frame
+  const rotateX = useTransform(mouseY, [-0.5, 0.5], [6, -6]);
+  const rotateY = useTransform(mouseX, [-0.5, 0.5], [-6, 6]);
+
+  const images = [
+    { src: "https://images.unsplash.com/photo-1539185441755-769473a23570?w=350&auto=format&fit=crop&q=80", zDepth: 45, rotateZ: -3, scale: 1.02 },
+    { src: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=350&auto=format&fit=crop&q=80", zDepth: -15, rotateZ: 2, scale: 0.97 },
+    { src: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=350&auto=format&fit=crop&q=80", zDepth: 35, rotateZ: -1, scale: 1.01 },
+    { src: "https://images.unsplash.com/photo-1486218119243-13883505764c?w=350&auto=format&fit=crop&q=80", zDepth: 10, rotateZ: 4, scale: 1.0 },
+    { src: "https://images.unsplash.com/photo-1530143311094-34d807799e8f?w=350&auto=format&fit=crop&q=80", zDepth: -25, rotateZ: -2, scale: 0.95 },
+    { src: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=350&auto=format&fit=crop&q=80", zDepth: 55, rotateZ: 1, scale: 1.03 }
+  ];
+
+  return (
+    <div 
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="position-relative w-100 py-4"
+      style={{ perspective: '1200px', transformStyle: 'preserve-3d', overflow: 'visible' }}
+    >
+      <motion.div
+        style={{
+          rotateX,
+          rotateY,
+          transformStyle: 'preserve-3d',
+          transition: 'box-shadow 0.3s ease'
+        }}
+        className="row g-4 justify-content-center"
+      >
+        {images.map((item, idx) => {
+          const cardX = useTransform(mouseX, [-0.5, 0.5], [item.zDepth * -0.6, item.zDepth * 0.6]);
+          const cardY = useTransform(mouseY, [-0.5, 0.5], [item.zDepth * -0.6, item.zDepth * 0.6]);
+
+          return (
+            <div key={idx} className="col-lg-2 col-md-4 col-6" style={{ transformStyle: 'preserve-3d' }}>
+              <ThreeDTiltCard
+                className="rounded-4 overflow-hidden position-relative cursor-pointer"
+                style={{ 
+                  height: '240px', 
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                  x: cardX,
+                  y: cardY,
+                  z: item.zDepth,
+                  rotateZ: item.rotateZ,
+                  scale: item.scale
+                }}
+              >
+                <img 
+                  src={item.src} 
+                  alt="Instagram Showcase" 
+                  className="w-100 h-100 object-fit-cover" 
+                  style={{ transform: 'translateZ(0px)' }}
+                />
+                
+                {/* Floating 3D overlay tag */}
+                <motion.div 
+                  variants={{
+                    initial: { opacity: 0, scale: 0.85, y: 10 },
+                    hover: { opacity: 1, scale: 1, y: 0 }
+                  }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  className="position-absolute d-flex align-items-center justify-content-center text-white"
+                  style={{
+                    inset: 0,
+                    backgroundColor: 'rgba(5, 12, 6, 0.7)',
+                    zIndex: 4,
+                    transform: 'translateZ(40px)',
+                    backdropFilter: 'blur(6px)'
+                  }}
+                >
+                  <span 
+                    className="font-monospace small fw-bold px-3 py-1.5 rounded-pill border border-primary text-white text-uppercase" 
+                    style={{ 
+                      fontSize: '0.7rem', 
+                      letterSpacing: '1.5px', 
+                      background: 'linear-gradient(135deg, rgba(0, 162, 255, 0.3), rgba(0, 229, 255, 0.1))',
+                      boxShadow: '0 0 15px rgba(0, 162, 255, 0.4)'
+                    }}
+                  >
+                    VIEW POST
+                  </span>
+                </motion.div>
+              </ThreeDTiltCard>
+            </div>
+          );
+        })}
+      </motion.div>
+    </div>
+  );
+};
+
+// 4D Motion Video Preview Section (Redesigned with Shoe Image & No Text)
+const FourDVideoSection = ({ onPlayClick }) => {
+  const containerRef = useRef(null);
+  
+  // Track scroll position & velocity (Dimension 4 - Scroll-time coupling)
+  const { scrollY } = useScroll();
+  const scrollVelocity = useVelocity(scrollY);
+  
+  const smoothVelocity = useSpring(scrollVelocity, {
+    stiffness: 100,
+    damping: 30
+  });
+
+  // Dynamic velocity adjustments for floating particle speed
+  const particleDurationFactor = useTransform(smoothVelocity, [-3000, 3000], [0.3, 0.3]);
+  
+  // 3D Motion (Dimensions 1, 2, 3 - Mouse parallax)
+  const mouseX = useSpring(0, { stiffness: 80, damping: 20 });
+  const mouseY = useSpring(0, { stiffness: 80, damping: 20 });
+
+  const handleMouseMove = (e) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
+
+  const rotateX = useTransform(mouseY, [-0.5, 0.5], [8, -8]);
+  const rotateY = useTransform(mouseX, [-0.5, 0.5], [-8, 8]);
+  const shiftX = useTransform(mouseX, [-0.5, 0.5], [-15, 15]);
+  const shiftY = useTransform(mouseY, [-0.5, 0.5], [-15, 15]);
+
+  // Continuously morphing shapes (4th Dimension - Time based morphing)
+  const blob1Path = {
+    animate: {
+      borderRadius: [
+        "42% 58% 70% 30% / 45% 45% 55% 55%",
+        "70% 30% 52% 48% / 60% 40% 60% 40%",
+        "30% 70% 38% 62% / 35% 65% 35% 65%",
+        "42% 58% 70% 30% / 45% 45% 55% 55%"
+      ],
+      rotate: [0, 120, 240, 360],
+      scale: [1, 1.1, 0.95, 1]
+    },
+    transition: {
+      duration: 12,
+      repeat: Infinity,
+      ease: "easeInOut"
+    }
+  };
+
+  const blob2Path = {
+    animate: {
+      borderRadius: [
+        "50% 50% 30% 70% / 50% 60% 40% 50%",
+        "30% 70% 70% 30% / 50% 30% 70% 50%",
+        "60% 40% 48% 52% / 40% 60% 40% 60%",
+        "50% 50% 30% 70% / 50% 60% 40% 50%"
+      ],
+      rotate: [360, 240, 120, 0],
+      scale: [1, 0.9, 1.15, 1]
+    },
+    transition: {
+      duration: 15,
+      repeat: Infinity,
+      ease: "easeInOut"
+    }
+  };
+
+  // Color Hue cycling (4th Dimension - Continuous time-based hue shifting)
+  const [hueAngle, setHueAngle] = useState(0);
+  useEffect(() => {
+    let frameId;
+    const animateHue = () => {
+      setHueAngle((prev) => (prev + 0.3) % 360);
+      frameId = requestAnimationFrame(animateHue);
+    };
+    frameId = requestAnimationFrame(animateHue);
+    return () => cancelAnimationFrame(frameId);
+  }, []);
+
+  return (
+    <section 
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="py-5 bg-dark text-white position-relative overflow-hidden w-100"
+      style={{
+        minHeight: '480px',
+        display: 'flex',
+        alignItems: 'center',
+        background: '#04080f',
+        perspective: '1200px'
+      }}
+    >
+      {/* 4D Background Morphing Blobs */}
+      <div className="position-absolute w-100 h-100 top-0 start-0 overflow-hidden" style={{ pointerEvents: 'none', zIndex: 1 }}>
+        <motion.div
+          animate={blob1Path.animate}
+          transition={blob1Path.transition}
+          className="position-absolute"
+          style={{
+            width: '450px',
+            height: '450px',
+            background: `radial-gradient(circle, hsla(${hueAngle}, 85%, 60%, 0.25) 0%, hsla(${(hueAngle + 60) % 360}, 85%, 60%, 0) 70%)`,
+            top: '-50px',
+            left: '-100px',
+            filter: 'blur(30px)'
+          }}
+        />
+        
+        <motion.div
+          animate={blob2Path.animate}
+          transition={blob2Path.transition}
+          className="position-absolute"
+          style={{
+            width: '500px',
+            height: '500px',
+            background: `radial-gradient(circle, hsla(${(hueAngle + 180) % 360}, 85%, 55%, 0.2) 0%, hsla(${(hueAngle + 240) % 360}, 85%, 55%, 0) 70%)`,
+            bottom: '-100px',
+            right: '-100px',
+            filter: 'blur(40px)'
+          }}
+        />
+
+        {/* 4D Drifting Particles */}
+        {[...Array(15)].map((_, i) => {
+          const size = 3 + (i % 3) * 3;
+          const baseDuration = 10 + (i % 4) * 5;
+          return (
+            <motion.div
+              key={i}
+              className="position-absolute rounded-circle"
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                background: `hsla(${(hueAngle + i * 20) % 360}, 80%, 75%, 0.45)`,
+                boxShadow: `0 0 10px hsla(${(hueAngle + i * 20) % 360}, 80%, 75%, 0.6)`,
+                top: `${(i * 17) % 95}%`,
+                left: `${(i * 23) % 95}%`
+              }}
+              animate={{
+                x: [0, 40, -40, 0],
+                y: [0, -60, 60, 0],
+                scale: [1, 1.4, 0.7, 1]
+              }}
+              transition={{
+                duration: baseDuration,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Grid Pattern overlay */}
+      <div 
+        className="position-absolute inset-0 opacity-10"
+        style={{
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+          zIndex: 2,
+          pointerEvents: 'none'
+        }}
+      />
+
+      {/* Main 3D Card Container */}
+      <div className="container" style={{ position: 'relative', zIndex: 3 }}>
+        <motion.div
+          style={{
+            rotateX: rotateX,
+            rotateY: rotateY,
+            x: shiftX,
+            y: shiftY,
+            transformStyle: 'preserve-3d'
+          }}
+          className="mx-auto text-center"
+        >
+          {/* Card Border with continuous gradient animation */}
+          <div 
+            className="rounded-5 glass-panel position-relative overflow-hidden d-flex flex-column align-items-center justify-content-center"
+            style={{
+              maxWidth: '900px',
+              width: '100%',
+              margin: '0 auto',
+              background: 'rgba(10, 15, 30, 0.65)',
+              backdropFilter: 'blur(16px)',
+              border: '2px solid transparent',
+              borderImage: `linear-gradient(135deg, hsla(${hueAngle}, 90%, 55%, 0.8), hsla(${(hueAngle + 120) % 360}, 90%, 55%, 0.1), hsla(${(hueAngle + 240) % 360}, 90%, 55%, 0.8)) 1`,
+              boxShadow: `0 25px 60px rgba(0, 0, 0, 0.65), 0 0 45px hsla(${hueAngle}, 90%, 55%, 0.35)`,
+              height: '420px',
+              cursor: 'pointer'
+            }}
+            onClick={onPlayClick}
+          >
+            {/* Cinematic Autoplaying Looping Video Background */}
+            <video
+              src={productVideo}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="position-absolute w-100 h-100 top-0 start-0"
+              style={{
+                objectFit: 'cover',
+                zIndex: 0,
+                opacity: 0.7,
+                transition: 'opacity 0.3s ease'
+              }}
+            />
+
+            {/* Dark Radial Overlay to integrate video with dark cards styling */}
+            <div 
+              className="position-absolute inset-0"
+              style={{
+                background: 'radial-gradient(circle, rgba(10, 15, 30, 0.3) 0%, rgba(4, 8, 15, 0.85) 90%)',
+                zIndex: 1,
+                pointerEvents: 'none'
+              }}
+            />
+
+            {/* Pulsing glow underlay */}
+            <div 
+              className="position-absolute rounded-circle"
+              style={{
+                width: '400px',
+                height: '400px',
+                background: `radial-gradient(circle, hsla(${hueAngle}, 90%, 55%, 0.2) 0%, rgba(0,0,0,0) 70%)`,
+                filter: 'blur(30px)',
+                zIndex: 2,
+                pointerEvents: 'none'
+              }}
+            />
+
+            {/* Play Button - floating high in 3D centered overlay */}
+            <motion.div 
+              style={{ 
+                position: 'absolute',
+                zIndex: 10,
+                transform: 'translateZ(80px)', 
+                transformStyle: 'preserve-3d' 
+              }}
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.95 }}
+              className="btn btn-primary rounded-circle p-4 d-inline-flex align-items-center justify-content-center shadow-lg"
+              style={{ 
+                width: '100px', 
+                height: '100px', 
+                backgroundColor: 'transparent',
+                background: `linear-gradient(135deg, hsla(${hueAngle}, 95%, 55%, 1), hsla(${(hueAngle + 60) % 360}, 95%, 55%, 1))`,
+                boxShadow: `0 0 40px hsla(${hueAngle}, 95%, 55%, 0.7)`
+              }}
+            >
+              <motion.div 
+                className="position-absolute rounded-circle"
+                style={{
+                  inset: -8,
+                  border: `3px solid hsla(${hueAngle}, 95%, 55%, 0.55)`,
+                }}
+                animate={{ scale: [1, 1.25, 1], opacity: [0.8, 0, 0.8] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <Play size={40} fill="#ffffff" className="ms-1 text-white" />
+            </motion.div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
   );
 };
 
@@ -51,7 +512,7 @@ const NatureRunnerSection = () => {
   });
 
   const pad = (num) => String(num).padStart(3, '0');
-  const runnerSrc = `/second-section/ezgif-frame-${pad(frameIndex)}.png`;
+  const runnerSrc = `/second-section/ezgif-frame-${pad(frameIndex)}.jpg`;
 
   // 3D Parallax Mouse Control Setup
   const mouseX = useSpring(0, { stiffness: 60, damping: 20 });
@@ -1844,29 +2305,7 @@ export const Home = () => {
 
       {/* TECH VIDEO PREVIEW */}
       <Section3D>
-        <section className="py-5 bg-dark text-white position-relative" style={{
-          backgroundImage: 'linear-gradient(rgba(17,17,17,0.85), rgba(17,17,17,0.85)), url(https://images.unsplash.com/photo-1539185441755-769473a23570?w=1200&auto=format&fit=crop&q=80)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          minHeight: '400px',
-          display: 'flex',
-          alignItems: 'center'
-        }}>
-          <div className="container text-center">
-            <motion.div 
-              whileHover={{ scale: 1.1 }}
-              className="btn btn-primary rounded-circle p-4 d-inline-flex align-items-center justify-content-center mb-4 shadow-lg cursor-pointer"
-              style={{ width: '80px', height: '80px', backgroundColor: 'var(--flux-primary)', boxShadow: '0 0 25px rgba(0, 162, 255, 0.4)' }}
-              onClick={() => setIsVideoOpen(true)}
-            >
-              <Play size={32} fill="#ffffff" className="ms-1" />
-            </motion.div>
-            <h2 className="display-6 fw-bold font-display text-white mb-2 text-uppercase">WATCH LAB TECH TESTING</h2>
-            <p className="text-white mx-auto" style={{ maxWidth: '600px', opacity: 0.85 }}>
-              See how the dual-density EnergyFloat foam performs under 3D force-plate modeling, yielding 25% more rebound than standard EVA midsoles.
-            </p>
-          </div>
-        </section>
+        <FourDVideoSection onPlayClick={() => setIsVideoOpen(true)} />
       </Section3D>
 
       {/* Cinematic Video Overlay Modal */}
@@ -1901,12 +2340,15 @@ export const Home = () => {
               style={{ maxWidth: '960px' }}
             >
               <div className="ratio ratio-16x9 shadow-2xl border border-secondary rounded-4 overflow-hidden bg-black">
-                <iframe
-                  src="https://www.youtube.com/embed/M1v9iI-5Xio?autoplay=1"
-                  title="Lab Tech Testing Video"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
+                <video
+                  src={productVideo}
+                  autoPlay
+                  controls
+                  loop
+                  playsInline
+                  className="w-100 h-100 rounded-4"
+                  style={{ objectFit: 'contain' }}
+                />
               </div>
             </motion.div>
           </motion.div>
@@ -1915,7 +2357,7 @@ export const Home = () => {
 
       {/* INSTAGRAM GALLERY WITH HOVER OVERLAYS */}
       <Section3D>
-        <section className="py-5">
+        <section className="py-5 overflow-visible">
           <div className="container">
             <div className="text-center mb-5">
               <span className="badge bg-primary-glow text-primary px-3 py-2 rounded-pill font-monospace mb-2">SOCIAL GRID</span>
@@ -1923,38 +2365,7 @@ export const Home = () => {
               <p className="text-muted">See how the community styles and pushes limits worldwide</p>
             </div>
 
-            <div className="row g-3">
-              {[
-                "https://images.unsplash.com/photo-1539185441755-769473a23570?w=300&auto=format&fit=crop&q=80",
-                "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=300&auto=format&fit=crop&q=80",
-                "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=300&auto=format&fit=crop&q=80",
-                "https://images.unsplash.com/photo-1486218119243-13883505764c?w=300&auto=format&fit=crop&q=80",
-                "https://images.unsplash.com/photo-1530143311094-34d807799e8f?w=300&auto=format&fit=crop&q=80",
-                "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&auto=format&fit=crop&q=80"
-              ].map((img, idx) => (
-                <div key={idx} className="col-lg-2 col-md-4 col-6">
-                  <motion.div 
-                    whileHover={{ 
-                      scale: 1.05,
-                      boxShadow: '0 10px 20px rgba(0, 162, 255, 0.1)'
-                    }}
-                    className="rounded-4 overflow-hidden shadow-sm position-relative cursor-pointer"
-                    style={{ height: '180px', border: '1px solid rgba(0, 0, 0, 0.05)' }}
-                  >
-                    <img src={img} alt="Instagram Showcase" className="w-100 h-100 object-fit-cover" />
-                    
-                    {/* Subtle hover blur gradient overlay */}
-                    <div style={{
-                      position: 'absolute',
-                      inset: 0,
-                      backgroundColor: 'rgba(0, 162, 255, 0.15)',
-                      opacity: 0,
-                      transition: 'opacity 0.3s'
-                    }} className="insta-hover-overlay" />
-                  </motion.div>
-                </div>
-              ))}
-            </div>
+            <ThreeDParallaxGallery />
           </div>
         </section>
       </Section3D>
